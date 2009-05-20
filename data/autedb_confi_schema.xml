@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<gconfi-key>
+	<name>aute-db</name>
+	<description>Plugin di libaute di autenticazione su database</description>
+
+	<gconfi-key>
+		<name>db</name>
+		<description>Parametri per la connessione al database</description>
+
+		<gconfi-key>
+			<name>provider_id</name>
+			<description>Id del provider</description>
+		</gconfi-key>
+		<gconfi-key>
+			<name>cnc_string</name>
+			<description>La stringa di connessione al database</description>
+		</gconfi-key>
+	</gconfi-key>
+</gconfi-key>

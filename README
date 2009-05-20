@@ -1,0 +1,2 @@
+La directory tools contiene il programma aute-db-mkpwd che serve per generare
+l'hash md5 utilizzato per la cifratura delle password
