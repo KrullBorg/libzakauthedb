@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2010 Andrea Zagli <azagli@libero.it>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,9 +23,19 @@
 int
 main (int argc, char **argv)
 {
-  gtk_init (&argc, &argv);
+	Aute *aute;
+	GSList *params;
 
-  g_fprintf (stderr, "Utente %s\n", aute_autentica (NULL));
+	gtk_init (&argc, &argv);
 
-  return 0;
+	aute = aute_new ();
+
+	params = g_slist_append (params, argv[1]);
+	params = g_slist_append (params, argv[2]);
+
+	aute_set_config (aute, params);
+
+	g_fprintf (stderr, "Utente %s\n", aute_autentica (aute));
+
+	return 0;
 }

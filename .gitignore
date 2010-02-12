@@ -23,3 +23,7 @@ missing
 *.o
 *.la
 *~
+config.h
+stamp-h1
+tests/test
+tools/aute-db-mkpwd

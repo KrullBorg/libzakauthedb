@@ -165,7 +165,7 @@ static gchar
 				                         "WHERE codice = '%s'",
 				                         gdaex_strescape (cifra_password (password_nuova), NULL),
 				                         gdaex_strescape (utente, NULL));
-					if (gdaex_execute (gdao, sql) == -1)
+					if (gdaex_execute (gdaex, sql) == -1)
 						{
 							/* TO DO */
 							g_warning ("Errore durante la modifica della password.");
