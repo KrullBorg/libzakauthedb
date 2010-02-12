@@ -1,7 +1,6 @@
 COPYING
 INSTALL
 Makefile
-Makefile.in
 aclocal.m4
 autom4te.cache/
 config.guess
@@ -23,6 +22,7 @@ missing
 *.o
 *.la
 *~
+*.in
 config.h
 stamp-h1
 tests/test
