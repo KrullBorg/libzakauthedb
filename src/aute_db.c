@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2006 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2005-2010 Andrea Zagli <azagli@libero.it>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,28 +17,29 @@
  */
 
 #include <gtk/gtk.h>
-#include <glade/glade.h>
 #include <gcrypt.h>
-#include <libconfi.h>
-#include <libgdaobj.h>
+#include <libgdaex.h>
 
-static GtkWidget *txt_utente,
-                 *txt_password,
-                 *exp_cambio,
-                 *txt_password_nuova,
-                 *txt_password_conferma;
+#ifdef HAVE_LIBCONFI
+	#include <libconfi.h>
+#endif
+
+static GtkWidget *txt_utente;
+static GtkWidget *txt_password;
+static GtkWidget *exp_cambio;
+static GtkWidget *txt_password_nuova;
+static GtkWidget *txt_password_conferma;
 
 /* PRIVATE */
+#ifdef HAVE_LIBCONFI
 static gboolean
-get_connection_parameters (Confi *confi, gchar **provider_id, gchar **cnc_string)
+get_connection_parameters_from_confi (Confi *confi, gchar **cnc_string)
 {
 	gboolean ret = TRUE;
 
-	*provider_id = confi_path_get_value (confi, "aute/aute-db/db/provider_id");
 	*cnc_string = confi_path_get_value (confi, "aute/aute-db/db/cnc_string");
 
-	if (*provider_id == NULL || *cnc_string == NULL
-	    || strcmp (g_strstrip (*provider_id), "") == 0
+	if (*cnc_string == NULL
 	    || strcmp (g_strstrip (*cnc_string), "") == 0)
 		{
 			ret = FALSE;
@@ -46,6 +47,7 @@ get_connection_parameters (Confi *confi, gchar **provider_id, gchar **cnc_string
 
 	return ret;
 }
+#endif
 
 /**
  * cifra_password:
@@ -74,41 +76,72 @@ static gchar
 }
 
 static gchar
-*controllo (Confi *confi)
+*controllo (GSList *parameters)
 {
 	gchar *sql;
 	gchar *utente = "";
 	gchar *password;
 	gchar *password_nuova;
-	gchar *provider_id;
 	gchar *cnc_string;
-	GdaO *gdao;
+	GdaEx *gdaex;
 	GdaDataModel *dm;
 
 	utente = g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_utente))));
 	password = g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_password))));
 
-	/* leggo i parametri di connessione dalla configurazione */
-	if (!get_connection_parameters (confi, &provider_id, &cnc_string)) return NULL;
+	cnc_string = NULL;
 
-	/* creo un oggetto GdaO */
-	gdao = gdao_new_from_string (NULL, provider_id, cnc_string);
-	if (gdao == NULL) return NULL;
+#ifdef HAVE_LIBCONFI
+	/* the first and only parameters must be a Confi object */
+	/* leggo i parametri di connessione dalla configurazione */
+	if (IS_CONFI (parameters->data))
+		{
+			if (!get_connection_parameters_from_confi (CONFI (parameters->data), &cnc_string))
+				{
+					cnc_string = NULL;
+				}
+		}
+#endif
+
+	if (cnc_string == NULL)
+		{
+			GSList *param;
+
+			param = g_slist_next (parameters);
+			if (param != NULL && param->data != NULL)
+				{
+					cnc_string = g_strdup ((gchar *)param->data);
+					cnc_string = g_strstrip (cnc_string);
+					if (g_strcmp0 (cnc_string, "") == 0)
+						{
+							cnc_string = NULL;
+						}
+				}
+		}
+
+	if (cnc_string == NULL)
+		{
+			return NULL;
+		}
+
+	/* creo un oggetto GdaEx */
+	gdaex = gdaex_new_from_string (cnc_string);
+	if (gdaex == NULL) return NULL;
 
 	sql = g_strdup_printf ("SELECT codice FROM utenti "
                          "WHERE codice = '%s' AND "
                          "password = '%s' AND "
                          "status <> 'E'",
-                         gdao_strescape (utente, NULL),
-                         gdao_strescape (cifra_password (password), NULL));
-	dm = gdao_query (gdao, sql);
+                         gdaex_strescape (utente, NULL),
+                         gdaex_strescape (cifra_password (password), NULL));
+	dm = gdaex_query (gdaex, sql);
 	if (dm == NULL || gda_data_model_get_n_rows (dm) <= 0)
 		{
 			g_warning ("Utente o password non validi.");
 			return NULL;
 		}
 
-	utente = g_strstrip (g_strdup (gdao_data_model_get_field_value_stringify_at (dm, 0, "codice")));
+	utente = g_strstrip (g_strdup (gdaex_data_model_get_field_value_stringify_at (dm, 0, "codice")));
 
 	if (strcmp (utente, "") != 0
 	    && gtk_expander_get_expanded (GTK_EXPANDER (exp_cambio)))
@@ -130,9 +163,9 @@ static gchar
 					sql = g_strdup_printf ("UPDATE utenti "
 				                         "SET password = '%s' "
 				                         "WHERE codice = '%s'",
-				                         gdao_strescape (cifra_password (password_nuova), NULL),
-				                         gdao_strescape (utente, NULL));
-					if (gdao_execute (gdao, sql) == -1)
+				                         gdaex_strescape (cifra_password (password_nuova), NULL),
+				                         gdaex_strescape (utente, NULL));
+					if (gdaex_execute (gdao, sql) == -1)
 						{
 							/* TO DO */
 							g_warning ("Errore durante la modifica della password.");
@@ -146,18 +179,26 @@ static gchar
 
 /* PUBLIC */
 gchar
-*autentica (Confi *confi)
+*autentica (GSList *parameters)
 {
+	GError *error;
 	gchar *ret = NULL;
 
-	GladeXML *gla_main = glade_xml_new (GLADEDIR "/autedb.glade", NULL, NULL);
-	GtkWidget *diag = glade_xml_get_widget (gla_main, "diag_main");
+	error = NULL;
 
-	txt_utente = glade_xml_get_widget (gla_main, "txt_utente");
-	txt_password = glade_xml_get_widget (gla_main, "txt_password");
-	exp_cambio = glade_xml_get_widget (gla_main, "exp_cambio");
-	txt_password_nuova = glade_xml_get_widget (gla_main, "txt_password_nuova");
-	txt_password_conferma = glade_xml_get_widget (gla_main, "txt_password_conferma");
+	GtkBuilder *gtkbuilder = gtk_builder_new ();
+	if (!gtk_builder_add_from_file (gtkbuilder, GLADEDIR "/autedb.glade", &error))
+		{
+			return NULL;
+		}
+
+	GtkWidget *diag = GTK_WIDGET (gtk_builder_get_object (gtkbuilder, "diag_main"));
+
+	txt_utente = GTK_WIDGET (gtk_builder_get_object (gtkbuilder, "txt_utente"));
+	txt_password = GTK_WIDGET (gtk_builder_get_object (gtkbuilder, "txt_password"));
+	exp_cambio = GTK_WIDGET (gtk_builder_get_object (gtkbuilder, "exp_cambio"));
+	txt_password_nuova = GTK_WIDGET (gtk_builder_get_object (gtkbuilder, "txt_password_nuova"));
+	txt_password_conferma = GTK_WIDGET (gtk_builder_get_object (gtkbuilder, "txt_password_conferma"));
 
 	/* imposto di default l'utente corrente della sessione */
 	gtk_entry_set_text (GTK_ENTRY (txt_utente), g_get_user_name ());
@@ -167,7 +208,7 @@ gchar
 		{
 			case GTK_RESPONSE_OK:
 				/* controllo dell'utente e della password */
-				ret = controllo (confi);
+				ret = controllo (parameters);
 				break;
 
 			case GTK_RESPONSE_CANCEL:
@@ -179,33 +220,26 @@ gchar
 		}
 
 	gtk_widget_destroy (diag);
-	g_object_unref (gla_main);
+	g_object_unref (gtkbuilder);
 
 	return ret;
 }
 
 /**
  * crea_utente:
- * @confi:
+ * @parameters:
  * @codice:
  * @password:
  */
 gboolean
-crea_utente (Confi *confi, const gchar *codice, const gchar *password)
+crea_utente (GSList *parameters, const gchar *codice, const gchar *password)
 {
 	gchar *codice_;
 	gchar *password_;
-	gchar *provider_id;
 	gchar *cnc_string;
 	gchar *sql;
-	GdaO *gdao;
+	GdaEx *gdaex;
 	GdaDataModel *dm;
-
-	if (!IS_CONFI (confi))
-		{
-			g_warning ("confi non è un oggetto Confi valido.");
-			return FALSE;
-		}
 
 	if (codice == FALSE || password == NULL)
 		{
@@ -222,57 +256,82 @@ crea_utente (Confi *confi, const gchar *codice, const gchar *password)
 			return FALSE;
 		}
 
+	cnc_string = NULL;
+
+#ifdef HAVE_LIBCONFI
+	/* the first and only parameters must be a Confi object */
 	/* leggo i parametri di connessione dalla configurazione */
-	if (!get_connection_parameters (confi, &provider_id, &cnc_string)) return FALSE;
+	if (IS_CONFI (parameters->data))
+		{
+			if (!get_connection_parameters_from_confi (CONFI (parameters->data), &cnc_string))
+				{
+					cnc_string = NULL;
+				}
+		}
+#endif
+
+	if (cnc_string == NULL)
+		{
+			GSList *param;
+
+			param = g_slist_next (parameters);
+			if (param != NULL && param->data != NULL)
+				{
+					cnc_string = g_strdup ((gchar *)param->data);
+					cnc_string = g_strstrip (cnc_string);
+					if (g_strcmp0 (cnc_string, "") == 0)
+						{
+							cnc_string = NULL;
+						}
+				}
+		}
+
+	if (cnc_string == NULL)
+		{
+			return FALSE;
+		}
 
 	/* creo un oggetto GdaO */
-	gdao = gdao_new_from_string (NULL, provider_id, cnc_string);
-	if (gdao == NULL) return FALSE;
+	gdaex = gdaex_new_from_string (cnc_string);
+	if (gdaex == NULL) return FALSE;
 
 	/* controllo se esiste gia' */
-  sql = g_strdup_printf ("SELECT codice FROM utenti WHERE codice = '%s'",
-                         gdao_strescape (codice_, NULL));
-	dm = gdao_query (gdao, sql);
+	sql = g_strdup_printf ("SELECT codice FROM utenti WHERE codice = '%s'",
+                         gdaex_strescape (codice_, NULL));
+	dm = gdaex_query (gdaex, sql);
 	if (dm != NULL && gda_data_model_get_n_rows (dm) > 0)
 		{
 			/* aggiorno l'utente */
 			sql = g_strdup_printf ("UPDATE utenti SET password = '%s' WHERE codice = '%s'",
-			                       gdao_strescape (cifra_password (password_), NULL),
-			                       gdao_strescape (codice_, NULL));
+			                       gdaex_strescape (cifra_password (password_), NULL),
+			                       gdaex_strescape (codice_, NULL));
 		}
 	else
 		{
 			/* creo l'utente */
 			sql = g_strdup_printf ("INSERT INTO utenti VALUES ('%s', '%s', '')",
-														 gdao_strescape (codice_, NULL),
-														 gdao_strescape (cifra_password (password_), NULL));
+			                       gdaex_strescape (codice_, NULL),
+			                       gdaex_strescape (cifra_password (password_), NULL));
 		}
 
-	return (gdao_execute (gdao, sql) >= 0);
+	return (gdaex_execute (gdaex, sql) >= 0);
 }
 
 /**
  * modifice_utente:
- * @confi:
+ * @parameters:
  * @codice:
  * @password:
  */
 gboolean
-modifica_utente (Confi *confi, const gchar *codice, const gchar *password)
+modifica_utente (GSList *parameters, const gchar *codice, const gchar *password)
 {
 	gchar *codice_;
 	gchar *password_;
-	gchar *provider_id;
 	gchar *cnc_string;
 	gchar *sql;
-	GdaO *gdao;
+	GdaEx *gdaex;
 	GdaDataModel *dm;
-
-	if (!IS_CONFI (confi))
-		{
-			g_warning ("confi non è un oggetto Confi valido.");
-			return FALSE;
-		}
 
 	if (codice == FALSE || password == NULL)
 		{
@@ -289,54 +348,77 @@ modifica_utente (Confi *confi, const gchar *codice, const gchar *password)
 			return FALSE;
 		}
 
+#ifdef HAVE_LIBCONFI
+	/* the first and only parameters must be a Confi object */
 	/* leggo i parametri di connessione dalla configurazione */
-	if (!get_connection_parameters (confi, &provider_id, &cnc_string)) return FALSE;
+	if (IS_CONFI (parameters->data))
+		{
+			if (!get_connection_parameters_from_confi (CONFI (parameters->data), &cnc_string))
+				{
+					cnc_string = NULL;
+				}
+		}
+#endif
 
-	/* creo un oggetto GdaO */
-	gdao = gdao_new_from_string (NULL, provider_id, cnc_string);
-	if (gdao == NULL) return FALSE;
+	if (cnc_string == NULL)
+		{
+			GSList *param;
+
+			param = g_slist_next (parameters);
+			if (param != NULL && param->data != NULL)
+				{
+					cnc_string = g_strdup ((gchar *)param->data);
+					cnc_string = g_strstrip (cnc_string);
+					if (g_strcmp0 (cnc_string, "") == 0)
+						{
+							cnc_string = NULL;
+						}
+				}
+		}
+
+	if (cnc_string == NULL)
+		{
+			return FALSE;
+		}
+
+	/* creo un oggetto GdaEx */
+	gdaex = gdaex_new_from_string (cnc_string);
+	if (gdaex == NULL) return FALSE;
 
 	/* controllo se non esiste */
-  sql = g_strdup_printf ("SELECT codice FROM utenti WHERE codice = '%s'",
-                         gdao_strescape (codice_, NULL));
-	dm = gdao_query (gdao, sql);
+	sql = g_strdup_printf ("SELECT codice FROM utenti WHERE codice = '%s'",
+                         gdaex_strescape (codice_, NULL));
+	dm = gdaex_query (gdaex, sql);
 	if (dm == NULL || gda_data_model_get_n_rows (dm) <= 0)
 		{
 			/* creo l'utente */
 			sql = g_strdup_printf ("INSERT INTO utenti VALUES ('%s', '%s', '')",
-														 gdao_strescape (codice_, NULL),
-														 gdao_strescape (cifra_password (password_), NULL));
+			                       gdaex_strescape (codice_, NULL),
+			                       gdaex_strescape (cifra_password (password_), NULL));
 		}
 	else
 		{
 			/* aggiorno l'utente */
 			sql = g_strdup_printf ("UPDATE utenti SET password = '%s' WHERE codice = '%s'",
-														 gdao_strescape (cifra_password (password_), NULL),
-														 gdao_strescape (codice_, NULL));
+			                       gdaex_strescape (cifra_password (password_), NULL),
+			                       gdaex_strescape (codice_, NULL));
 		}
 
-	return (gdao_execute (gdao, sql) >= 0);
+	return (gdaex_execute (gdaex, sql) >= 0);
 }
 
 /**
  * elimina_utente:
- * @confi:
+ * @parameters:
  * @codice:
  */
 gboolean
-elimina_utente (Confi *confi, const gchar *codice)
+elimina_utente (GSList *parameters, const gchar *codice)
 {
 	gchar *codice_;
-	gchar *provider_id;
 	gchar *cnc_string;
 	gchar *sql;
-	GdaO *gdao;
-
-	if (!IS_CONFI (confi))
-		{
-			g_warning ("confi non è un oggetto Confi valido.");
-			return FALSE;
-		}
+	GdaEx *gdaex;
 
 	if (codice == FALSE)
 		{
@@ -352,16 +434,46 @@ elimina_utente (Confi *confi, const gchar *codice)
 			return FALSE;
 		}
 
+#ifdef HAVE_LIBCONFI
+	/* the first and only parameters must be a Confi object */
 	/* leggo i parametri di connessione dalla configurazione */
-	if (!get_connection_parameters (confi, &provider_id, &cnc_string)) return FALSE;
+	if (IS_CONFI (parameters->data))
+		{
+			if (!get_connection_parameters_from_confi (CONFI (parameters->data), &cnc_string))
+				{
+					cnc_string = NULL;
+				}
+		}
+#endif
 
-	/* creo un oggetto GdaO */
-	gdao = gdao_new_from_string (NULL, provider_id, cnc_string);
-	if (gdao == NULL) return FALSE;
+	if (cnc_string == NULL)
+		{
+			GSList *param;
+
+			param = g_slist_next (parameters);
+			if (param != NULL && param->data != NULL)
+				{
+					cnc_string = g_strdup ((gchar *)param->data);
+					cnc_string = g_strstrip (cnc_string);
+					if (g_strcmp0 (cnc_string, "") == 0)
+						{
+							cnc_string = NULL;
+						}
+				}
+		}
+
+	if (cnc_string == NULL)
+		{
+			return FALSE;
+		}
+
+	/* creo un oggetto GdaEx */
+	gdaex = gdaex_new_from_string (cnc_string);
+	if (gdaex == NULL) return FALSE;
 
 	/* elimino _logicamente_ l'utente */
-  sql = g_strdup_printf ("UPDATE utenti SET status = 'E' WHERE codice = '%s'",
-                         gdao_strescape (codice_, NULL));
+	sql = g_strdup_printf ("UPDATE utenti SET status = 'E' WHERE codice = '%s'",
+                           gdaex_strescape (codice_, NULL));
 
-	return (gdao_execute (gdao, sql) >= 0);
+	return (gdaex_execute (gdaex, sql) >= 0);
 }

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([libaute-db], [0.0.1], [azagli@libero.it])
+AC_INIT([libaute-db], [0.0.2], [azagli@libero.it])
 AC_CONFIG_SRCDIR([src/aute_db.c])
 AC_CONFIG_HEADER([config.h])
 
@@ -18,13 +18,18 @@ AC_PROG_CC
 AC_PROG_LIBTOOL
 
 # Checks for libraries.
-PKG_CHECK_MODULES(LIBAUTEDB, [gtk+-2.0 >= 2.8.0
-                              libglade-2.0 >= 2.6.0
-                              libgdaobj >= 0.0.2
-                              libaute >= 0.0.1])
+PKG_CHECK_MODULES(LIBAUTEDB, [gtk+-2.0 >= 2.16.0
+                              libgdaex >= 0.1.0
+                              libaute >= 0.0.2])
 
 AC_SUBST(LIBAUTEDB_CFLAGS)
 AC_SUBST(LIBAUTEDB_LIBS)
+
+PKG_CHECK_MODULES(LIBCONFI, [libconfi >= 0.0.2], AC_DEFINE(HAVE_LIBCONFI, [1], [libconfi is present]), have_libconfi=yes)
+
+AM_CONDITIONAL(HAVE_LIBCONFI, test x"$have_libconfi" = "xyes")
+AC_SUBST(LIBCONFI_CFLAGS)
+AC_SUBST(LIBCONFI_LIBS)
 
 AM_PATH_LIBGCRYPT(1.2.1, :, [AC_MSG_ERROR([libgcrypt >= 1.2.1 not found.])])
 
