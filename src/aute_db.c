@@ -216,6 +216,8 @@ gchar
 				break;
 
 			case GTK_RESPONSE_CANCEL:
+			case GTK_RESPONSE_NONE:
+			case GTK_RESPONSE_DELETE_EVENT:
 				ret = g_strdup ("");
 				break;
 
