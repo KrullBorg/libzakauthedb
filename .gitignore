@@ -27,3 +27,4 @@ config.h
 stamp-h1
 tests/test
 tools/aute-db-mkpwd
+*.tar.gz

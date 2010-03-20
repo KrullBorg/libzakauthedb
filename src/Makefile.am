@@ -13,3 +13,5 @@ libaute_pluginsdir = $(libdir)/libaute/plugins
 libaute_plugins_LTLIBRARIES = libaute-db.la
 
 libaute_db_la_SOURCES = aute_db.c
+
+libaute_db_la_LDFLAGS = -no-undefined
