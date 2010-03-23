@@ -191,8 +191,18 @@ gchar
 	error = NULL;
 
 	GtkBuilder *gtkbuilder = gtk_builder_new ();
-	if (!gtk_builder_add_from_file (gtkbuilder, GLADEDIR "/autedb.glade", &error))
+
+#ifdef G_OS_WIN32
+#undef GLADEDIR
+
+	gchar *GLADEDIR;
+
+	GLADEDIR = g_build_filename (g_win32_get_package_installation_directory_of_module (NULL), "share", "libaute-db", "glade", NULL);
+#endif
+
+	if (!gtk_builder_add_from_file (gtkbuilder, g_build_filename (GLADEDIR, "autedb.glade", NULL), &error))
 		{
+			g_error ("Impossibile trovare il file di definizione dell'interfaccia utente.");
 			return NULL;
 		}
 
