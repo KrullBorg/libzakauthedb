@@ -35,7 +35,7 @@ main (int argc, char **argv)
 
 	aute_set_config (aute, params);
 
-	g_fprintf (stderr, "Utente %s\n", aute_autentica (aute));
+	g_message ("User %s\n", aute_autentica (aute));
 
 	return 0;
 }

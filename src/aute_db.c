@@ -132,10 +132,11 @@ static gchar
 	gdaex = gdaex_new_from_string (cnc_string);
 	if (gdaex == NULL) return NULL;
 
-	sql = g_strdup_printf ("SELECT codice FROM utenti "
-                         "WHERE codice = '%s' AND "
-                         "password = '%s' AND "
-                         "status <> 'E'",
+	sql = g_strdup_printf ("SELECT code"
+	                     " FROM users"
+                         " WHERE code = '%s'"
+                         " AND password = '%s'"
+                         " AND status <> 'E'",
                          gdaex_strescape (utente, NULL),
                          gdaex_strescape (cifra_password (password), NULL));
 	dm = gdaex_query (gdaex, sql);
@@ -145,7 +146,7 @@ static gchar
 			return NULL;
 		}
 
-	utente = g_strstrip (g_strdup (gdaex_data_model_get_field_value_stringify_at (dm, 0, "codice")));
+	utente = g_strstrip (g_strdup (gdaex_data_model_get_field_value_stringify_at (dm, 0, "code")));
 
 	if (strcmp (utente, "") != 0
 	    && gtk_expander_get_expanded (GTK_EXPANDER (exp_cambio)))
@@ -164,9 +165,9 @@ static gchar
 			else
 				{
 					/* cambio la password */
-					sql = g_strdup_printf ("UPDATE utenti "
-				                         "SET password = '%s' "
-				                         "WHERE codice = '%s'",
+					sql = g_strdup_printf ("UPDATE users"
+				                         " SET password = '%s'"
+				                         " WHERE code = '%s'",
 				                         gdaex_strescape (cifra_password (password_nuova), NULL),
 				                         gdaex_strescape (utente, NULL));
 					if (gdaex_execute (gdaex, sql) == -1)
@@ -312,20 +313,20 @@ crea_utente (GSList *parameters, const gchar *codice, const gchar *password)
 	if (gdaex == NULL) return FALSE;
 
 	/* controllo se esiste gia' */
-	sql = g_strdup_printf ("SELECT codice FROM utenti WHERE codice = '%s'",
+	sql = g_strdup_printf ("SELECT code FROM users WHERE code = '%s'",
                          gdaex_strescape (codice_, NULL));
 	dm = gdaex_query (gdaex, sql);
 	if (dm != NULL && gda_data_model_get_n_rows (dm) > 0)
 		{
 			/* aggiorno l'utente */
-			sql = g_strdup_printf ("UPDATE utenti SET password = '%s' WHERE codice = '%s'",
+			sql = g_strdup_printf ("UPDATE users SET password = '%s' WHERE code = '%s'",
 			                       gdaex_strescape (cifra_password (password_), NULL),
 			                       gdaex_strescape (codice_, NULL));
 		}
 	else
 		{
 			/* creo l'utente */
-			sql = g_strdup_printf ("INSERT INTO utenti VALUES ('%s', '%s', '')",
+			sql = g_strdup_printf ("INSERT INTO users VALUES ('%s', '%s', '')",
 			                       gdaex_strescape (codice_, NULL),
 			                       gdaex_strescape (cifra_password (password_), NULL));
 		}
@@ -402,20 +403,20 @@ modifica_utente (GSList *parameters, const gchar *codice, const gchar *password)
 	if (gdaex == NULL) return FALSE;
 
 	/* controllo se non esiste */
-	sql = g_strdup_printf ("SELECT codice FROM utenti WHERE codice = '%s'",
+	sql = g_strdup_printf ("SELECT code FROM users WHERE code = '%s'",
                          gdaex_strescape (codice_, NULL));
 	dm = gdaex_query (gdaex, sql);
 	if (dm == NULL || gda_data_model_get_n_rows (dm) <= 0)
 		{
 			/* creo l'utente */
-			sql = g_strdup_printf ("INSERT INTO utenti VALUES ('%s', '%s', '')",
+			sql = g_strdup_printf ("INSERT INTO users VALUES ('%s', '%s', '')",
 			                       gdaex_strescape (codice_, NULL),
 			                       gdaex_strescape (cifra_password (password_), NULL));
 		}
 	else
 		{
 			/* aggiorno l'utente */
-			sql = g_strdup_printf ("UPDATE utenti SET password = '%s' WHERE codice = '%s'",
+			sql = g_strdup_printf ("UPDATE users SET password = '%s' WHERE code = '%s'",
 			                       gdaex_strescape (cifra_password (password_), NULL),
 			                       gdaex_strescape (codice_, NULL));
 		}
@@ -488,7 +489,7 @@ elimina_utente (GSList *parameters, const gchar *codice)
 	if (gdaex == NULL) return FALSE;
 
 	/* elimino _logicamente_ l'utente */
-	sql = g_strdup_printf ("UPDATE utenti SET status = 'E' WHERE codice = '%s'",
+	sql = g_strdup_printf ("UPDATE users SET status = 'E' WHERE code = '%s'",
                            gdaex_strescape (codice_, NULL));
 
 	return (gdaex_execute (gdaex, sql) >= 0);

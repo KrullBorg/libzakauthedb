@@ -1,10 +1,16 @@
-CREATE TABLE utenti
-(
-  codice varchar(20) NOT NULL DEFAULT '',
-  "password" varchar(32) DEFAULT '',
-  status char(1) DEFAULT '',
-  CONSTRAINT utenti_pkey PRIMARY KEY (codice)
+CREATE TABLE users (
+	code varchar(20) NOT NULL DEFAULT '',
+	password varchar(32) DEFAULT '',
+	surname varchar(100) DEFAULT '',
+	name varchar(100) DEFAULT '',
+	enabled bool,
+	last_access time,
+	password_expiration time,
+	description text DEFAULT '',
+	status varchar(1) DEFAULT '',
+	CONSTRAINT users_pkey PRIMARY KEY (code)
 );
 
-/* utente iniziale con password 'root' */
-INSERT INTO utenti VALUES ('root', '63a9f0ea7bb98050796b649e85481845', '');
+/* initial user with password 'root' */
+INSERT INTO utenti (codice, password, cognome, abilitato, status)
+VALUES ('root', '63a9f0ea7bb98050796b649e85481845', 'Root', TRUE, '');
