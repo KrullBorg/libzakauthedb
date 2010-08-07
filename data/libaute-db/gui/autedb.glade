@@ -225,6 +225,7 @@
         <property name="visible">True</property>
         <property name="border_width">5</property>
         <property name="orientation">vertical</property>
+        <property name="spacing">5</property>
         <child>
           <object class="GtkScrolledWindow" id="scrolledwindow1">
             <property name="visible">True</property>

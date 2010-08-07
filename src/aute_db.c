@@ -23,6 +23,7 @@
 #include <gtk/gtk.h>
 #include <gcrypt.h>
 #include <libgdaex.h>
+#include <libgtkform/form.h>
 
 #ifdef HAVE_LIBCONFI
 	#include <libconfi.h>
@@ -36,6 +37,19 @@ static GtkWidget *txt_password;
 static GtkWidget *exp_cambio;
 static GtkWidget *txt_password_nuova;
 static GtkWidget *txt_password_conferma;
+
+static GtkTreeView *trv_users;
+static GtkListStore *lstore_users;
+static GtkTreeSelection *sel_users;
+
+enum
+{
+	COL_STATUS,
+	COL_CODE,
+	COL_NAME,
+	COL_LAST_ACCESS,
+	COL_PASSWORD_EXPIRATION
+};
 
 /* PRIVATE */
 #ifdef HAVE_LIBCONFI
@@ -195,7 +209,34 @@ static gchar
 static void
 autedb_load_users_list ()
 {
+	gchar *sql;
+	GdaDataModel *dm;
 
+	guint rows;
+	guint row;
+	GtkTreeIter iter;
+
+	gtk_list_store_clear (lstore_users);
+
+	sql = g_strdup_printf ("SELECT * FROM users WHERE status <> 'E'");
+	dm = gdaex_query (gdaex, sql);
+	if (dm != NULL)
+		{
+			rows = gda_data_model_get_n_rows (dm);
+			for (row = 0; row < rows; row++)
+				{
+					gtk_list_store_append (lstore_users, &iter);
+					gtk_list_store_set (lstore_users, &iter,
+					                    COL_STATUS, gdaex_data_model_get_field_value_stringify_at (dm, row, "status"),
+					                    COL_CODE, gdaex_data_model_get_field_value_stringify_at (dm, row, "code"),
+					                    COL_NAME, g_strdup_printf ("%s %s",
+					                              gdaex_data_model_get_field_value_stringify_at (dm, row, "surname"),
+					                              gdaex_data_model_get_field_value_stringify_at (dm, row, "name")),
+					                    COL_LAST_ACCESS, gdaex_data_model_get_field_value_stringify_at (dm, row, "last_access"),
+					                    COL_PASSWORD_EXPIRATION, gdaex_data_model_get_field_value_stringify_at (dm, row, "password_expiration"),
+					                    -1);
+				}
+		}
 }
 
 static void
@@ -310,19 +351,24 @@ GtkWidget
 	GUIDIR = g_build_filename (g_win32_get_package_installation_directory_of_module (NULL), "share", "libaute-db", "gu", NULL);
 #endif
 
-	if (!gtk_builder_add_from_file (gtkbuilder, g_build_filename (GUIDIR, "autedb.gui", NULL), &error))
+	if (!gtk_builder_add_objects_from_file (gtkbuilder, g_build_filename (GUIDIR, "autedb.gui", NULL),
+	                                        g_strsplit ("lstore_users|vbx_users_list", "|", -1),
+	                                        &error))
 		{
 			g_error ("Impossibile trovare il file di definizione dell'interfaccia utente.");
 			return NULL;
 		}
 
 	w = GTK_WIDGET (gtk_builder_get_object (gtkbuilder, "vbx_users_list"));
-
 	if (w == NULL)
 		{
 			g_warning ("Unable to find the widget vbx_users_list.");
 			return NULL;
 		}
+
+	trv_users = GTK_TREE_VIEW (gtk_builder_get_object (gtkbuilder, "treeview1"));
+	lstore_users = GTK_LIST_STORE (gtk_builder_get_object (gtkbuilder, "lstore_users"));
+	sel_users = gtk_tree_view_get_selection (trv_users);
 
 	g_signal_connect (G_OBJECT (gtk_builder_get_object (gtkbuilder, "button1")), "clicked",
 	                  G_CALLBACK (autedb_on_btn_new_clicked), NULL);
