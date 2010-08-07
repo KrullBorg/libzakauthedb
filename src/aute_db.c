@@ -23,7 +23,7 @@
 #include <gtk/gtk.h>
 #include <gcrypt.h>
 #include <libgdaex.h>
-#include <libgtkform/form.h>
+#include <libgtkform/fielddatetime.h>
 
 #ifdef HAVE_LIBCONFI
 	#include <libconfi.h>
@@ -70,7 +70,7 @@ get_connection_parameters_from_confi (Confi *confi, gchar **cnc_string)
 }
 #endif
 
-void
+static void
 get_gdaex (GSList *parameters)
 {
 	gchar *cnc_string;
@@ -232,8 +232,8 @@ autedb_load_users_list ()
 					                    COL_NAME, g_strdup_printf ("%s %s",
 					                              gdaex_data_model_get_field_value_stringify_at (dm, row, "surname"),
 					                              gdaex_data_model_get_field_value_stringify_at (dm, row, "name")),
-					                    COL_LAST_ACCESS, gdaex_data_model_get_field_value_stringify_at (dm, row, "last_access"),
-					                    COL_PASSWORD_EXPIRATION, gdaex_data_model_get_field_value_stringify_at (dm, row, "password_expiration"),
+					                    COL_LAST_ACCESS, gtk_form_field_datetime_get_str_from_tm (gdaex_data_model_get_field_value_tm_at (dm, row, "last_access"), "%d/%m/%Y %H.%M.%S"),
+					                    COL_PASSWORD_EXPIRATION, gtk_form_field_datetime_get_str_from_tm (gdaex_data_model_get_field_value_tm_at (dm, row, "password_expiration"), "%d/%m/%Y %H.%M.%S"),
 					                    -1);
 				}
 		}
@@ -332,8 +332,13 @@ gchar
 	return ret;
 }
 
+/**
+ * get_user_gui_manager:
+ * @parameters:
+ *
+ */
 GtkWidget
-*manage_user_gui (GSList *parameters)
+*get_user_gui_manager (GSList *parameters)
 {
 	GtkWidget *w;
 
