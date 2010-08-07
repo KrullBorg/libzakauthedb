@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([libaute-db], [0.0.2], [azagli@libero.it])
+AC_INIT([libaute-db], [0.1.0], [azagli@libero.it])
 AC_CONFIG_SRCDIR([src/aute_db.c])
 AC_CONFIG_HEADER([config.h])
 
@@ -19,8 +19,8 @@ AC_PROG_LIBTOOL
 
 # Checks for libraries.
 PKG_CHECK_MODULES(LIBAUTEDB, [gtk+-2.0 >= 2.16.0
-                              libgdaex >= 0.1.0
-                              libaute >= 0.0.2])
+                              libaute >= 0.0.2
+                              libgtkform >= 0.1.4])
 
 AC_SUBST(LIBAUTEDB_CFLAGS)
 AC_SUBST(LIBAUTEDB_LIBS)
@@ -50,6 +50,7 @@ AC_CONFIG_FILES([
   tools/Makefile
   data/Makefile
   data/libaute-db/Makefile
-  data/libaute-db/glade/Makefile
+  data/libaute-db/form/Makefile
+  data/libaute-db/gui/Makefile
 ])
 AC_OUTPUT

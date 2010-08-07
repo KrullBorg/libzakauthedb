@@ -1,9 +1,9 @@
-gladedir = $(datadir)/libaute-db/glade
+guidir = $(datadir)/libaute-db/gui
 
 AM_CPPFLAGS = $(LIBAUTEDB_CFLAGS) \
               $(LIBGCRYPT_CFLAGS) \
               $(LIBCONFI_CFLAGS) \
-              -DGLADEDIR=\""$(gladedir)"\"
+              -DGUIDIR=\""$(guidir)"\"
 
 LIBS = $(LIBAUTEDB_LIBS) \
        $(LIBGCRYPT_LIBS) \

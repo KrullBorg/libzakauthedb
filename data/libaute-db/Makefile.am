@@ -1,1 +1,1 @@
-SUBDIRS = glade
+SUBDIRS = gui form

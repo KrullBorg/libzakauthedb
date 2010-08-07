@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<gtkform>
+
+	<table>users</table>
+
+	<widget type="entry" name="entry1" label="label6">
+		<field type="text" name="code">
+			<is-key>t</is-key>
+			<obligatory>t</obligatory>
+		</field>
+	</widget>
+
+	<widget type="label" name="label114">
+		<field type="text" name="password">
+		</field>
+	</widget>
+
+	<widget type="entry" name="entry2" label="label7">
+		<field type="text" name="surname">
+			<obligatory>t</obligatory>
+		</field>
+	</widget>
+
+	<widget type="entry" name="entry3" label="label8">
+		<field type="text" name="name" />
+	</widget>
+
+	<widget type="checkbox" name="checkbutton1" label="label9">
+		<field type="boolean" name="enabled">
+			<default>t</default>
+		</field>
+	</widget>
+
+	<widget type="label" name="label113" label="label10">
+		<field type="datetime" name="last_access">
+			<datetime-type>datetime</datetime-type>
+			<display-format>%d/%m/%Y %H.%M.%S</display-format>
+		</field>
+	</widget>
+
+	<widget type="entry" name="entry4" label="label11">
+		<field type="datetime" name="password_expiration">
+			<datetime-type>datetime</datetime-type>
+			<display-format>%d/%m/%Y %H.%M.%S</display-format>
+		</field>
+	</widget>
+
+	<widget type="textview" name="textview1" label="label12">
+		<field type="text" name="notes" />
+	</widget>
+
+</gtkform>

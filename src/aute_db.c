@@ -28,6 +28,9 @@
 	#include <libconfi.h>
 #endif
 
+static GtkBuilder *gtkbuilder;
+static GdaEx *gdaex;
+
 static GtkWidget *txt_utente;
 static GtkWidget *txt_password;
 static GtkWidget *exp_cambio;
@@ -53,45 +56,10 @@ get_connection_parameters_from_confi (Confi *confi, gchar **cnc_string)
 }
 #endif
 
-/**
- * cifra_password:
- * @password: una stringa da cifrare.
- *
- * Return: la @password cifrata.
- */
-static gchar
-*cifra_password (const gchar *password)
+void
+get_gdaex (GSList *parameters)
 {
-	gchar digest[17] = "";
-	gchar pwd_gcrypt[33] = "";
-	gint i;
-
-	if (strcmp (password, "") != 0)
-		{
-			gcry_md_hash_buffer (GCRY_MD_MD5, &digest, password, strlen (password));
-			for (i = 0; i < 16; i++)
-				{
-					g_sprintf (pwd_gcrypt + (i * 2), "%02x", digest[i] & 0xFF);
-				}
-			pwd_gcrypt[32] = '\0';
-		}
-
-	return g_strdup (&pwd_gcrypt[0]);
-}
-
-static gchar
-*controllo (GSList *parameters)
-{
-	gchar *sql;
-	gchar *utente = "";
-	gchar *password;
-	gchar *password_nuova;
 	gchar *cnc_string;
-	GdaEx *gdaex;
-	GdaDataModel *dm;
-
-	utente = g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_utente))));
-	password = g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_password))));
 
 	cnc_string = NULL;
 
@@ -125,12 +93,54 @@ static gchar
 
 	if (cnc_string == NULL)
 		{
-			return NULL;
+			return;
 		}
 
 	/* creo un oggetto GdaEx */
 	gdaex = gdaex_new_from_string (cnc_string);
-	if (gdaex == NULL) return NULL;
+	if (gdaex == NULL)
+		{
+			g_warning ("Unable to establish a db connection.");
+		}
+}
+
+/**
+ * cifra_password:
+ * @password: una stringa da cifrare.
+ *
+ * Return: la @password cifrata.
+ */
+static gchar
+*cifra_password (const gchar *password)
+{
+	gchar digest[17] = "";
+	gchar pwd_gcrypt[33] = "";
+	gint i;
+
+	if (strcmp (password, "") != 0)
+		{
+			gcry_md_hash_buffer (GCRY_MD_MD5, &digest, password, strlen (password));
+			for (i = 0; i < 16; i++)
+				{
+					g_sprintf (pwd_gcrypt + (i * 2), "%02x", digest[i] & 0xFF);
+				}
+			pwd_gcrypt[32] = '\0';
+		}
+
+	return g_strdup (&pwd_gcrypt[0]);
+}
+
+static gchar
+*controllo ()
+{
+	gchar *sql;
+	gchar *utente = "";
+	gchar *password;
+	gchar *password_nuova;
+	GdaDataModel *dm;
+
+	utente = g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_utente))));
+	password = g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_password))));
 
 	sql = g_strdup_printf ("SELECT code"
 	                     " FROM users"
@@ -182,6 +192,36 @@ static gchar
 	return utente;
 }
 
+static void
+autedb_load_users_list ()
+{
+
+}
+
+static void
+autedb_on_btn_new_clicked (GtkButton *button,
+                           gpointer user_data)
+{
+}
+  
+static void
+autedb_on_btn_edit_clicked (GtkButton *button,
+                           gpointer user_data)
+{
+}
+  
+static void
+autedb_on_btn_delete_clicked (GtkButton *button,
+                           gpointer user_data)
+{
+}
+  
+static void
+autedb_on_btn_find_clicked (GtkButton *button,
+                           gpointer user_data)
+{
+}
+  
 /* PUBLIC */
 gchar
 *autentica (GSList *parameters)
@@ -191,19 +231,28 @@ gchar
 
 	error = NULL;
 
-	GtkBuilder *gtkbuilder = gtk_builder_new ();
+	get_gdaex (parameters);
+	if (gdaex == NULL)
+		{
+			return NULL;
+		}
+
+	gtkbuilder = gtk_builder_new ();
 
 #ifdef G_OS_WIN32
-#undef GLADEDIR
+#undef GUIDIR
 
-	gchar *GLADEDIR;
+	gchar *GUIDIR;
 
-	GLADEDIR = g_build_filename (g_win32_get_package_installation_directory_of_module (NULL), "share", "libaute-db", "glade", NULL);
+	GUIDIR = g_build_filename (g_win32_get_package_installation_directory_of_module (NULL), "share", "libaute-db", "gui", NULL);
 #endif
 
-	if (!gtk_builder_add_from_file (gtkbuilder, g_build_filename (GLADEDIR, "autedb.glade", NULL), &error))
+	if (!gtk_builder_add_objects_from_file (gtkbuilder, g_build_filename (GUIDIR, "autedb.gui", NULL),
+	                                        g_strsplit ("diag_main", "|", -1),
+	                                        &error))
 		{
-			g_error ("Impossibile trovare il file di definizione dell'interfaccia utente.");
+			g_warning ("Impossibile trovare il file di definizione dell'interfaccia utente: %s.",
+			         error != NULL && error->message != NULL ? error->message : "no details");
 			return NULL;
 		}
 
@@ -223,7 +272,7 @@ gchar
 		{
 			case GTK_RESPONSE_OK:
 				/* controllo dell'utente e della password */
-				ret = controllo (parameters);
+				ret = controllo ();
 				break;
 
 			case GTK_RESPONSE_CANCEL:
@@ -240,6 +289,53 @@ gchar
 	g_object_unref (gtkbuilder);
 
 	return ret;
+}
+
+GtkWidget
+*manage_user_gui (GSList *parameters)
+{
+	GtkWidget *w;
+
+	GError *error;
+
+	error = NULL;
+
+	gtkbuilder = gtk_builder_new ();
+
+#ifdef G_OS_WIN32
+#undef GUIDIR
+
+	gchar *GUIDIR;
+
+	GUIDIR = g_build_filename (g_win32_get_package_installation_directory_of_module (NULL), "share", "libaute-db", "gu", NULL);
+#endif
+
+	if (!gtk_builder_add_from_file (gtkbuilder, g_build_filename (GUIDIR, "autedb.gui", NULL), &error))
+		{
+			g_error ("Impossibile trovare il file di definizione dell'interfaccia utente.");
+			return NULL;
+		}
+
+	w = GTK_WIDGET (gtk_builder_get_object (gtkbuilder, "vbx_users_list"));
+
+	if (w == NULL)
+		{
+			g_warning ("Unable to find the widget vbx_users_list.");
+			return NULL;
+		}
+
+	g_signal_connect (G_OBJECT (gtk_builder_get_object (gtkbuilder, "button1")), "clicked",
+	                  G_CALLBACK (autedb_on_btn_new_clicked), NULL);
+	g_signal_connect (G_OBJECT (gtk_builder_get_object (gtkbuilder, "button2")), "clicked",
+	                  G_CALLBACK (autedb_on_btn_edit_clicked), NULL);
+	g_signal_connect (G_OBJECT (gtk_builder_get_object (gtkbuilder, "button3")), "clicked",
+	                  G_CALLBACK (autedb_on_btn_delete_clicked), NULL);
+	g_signal_connect (G_OBJECT (gtk_builder_get_object (gtkbuilder, "button4")), "clicked",
+	                  G_CALLBACK (autedb_on_btn_find_clicked), NULL);
+
+	autedb_load_users_list ();
+
+	return w;
 }
 
 /**

@@ -6,11 +6,11 @@ CREATE TABLE users (
 	enabled bool,
 	last_access time,
 	password_expiration time,
-	description text DEFAULT '',
+	notes text DEFAULT '',
 	status varchar(1) DEFAULT '',
 	CONSTRAINT users_pkey PRIMARY KEY (code)
 );
 
 /* initial user with password 'root' */
-INSERT INTO utenti (codice, password, cognome, abilitato, status)
+INSERT INTO users (code, password, surnam, enabled, status)
 VALUES ('root', '63a9f0ea7bb98050796b649e85481845', 'Root', TRUE, '');
