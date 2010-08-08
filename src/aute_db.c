@@ -43,6 +43,8 @@ static GtkWidget *exp_cambio;
 static GtkWidget *txt_password_nuova;
 static GtkWidget *txt_password_conferma;
 
+static GtkWidget *w_users;
+
 static GtkTreeView *trv_users;
 static GtkListStore *lstore_users;
 static GtkTreeSelection *sel_users;
@@ -122,14 +124,36 @@ get_gdaex (GSList *parameters)
 		}
 }
 
+static GtkWindow
+*autedb_get_gtkwidget_parent_gtkwindow (GtkWidget *widget)
+{
+	GtkWindow *w;
+	GtkWidget *w_parent;
+
+	w = NULL;
+
+	w_parent = gtk_widget_get_parent (widget);
+	while (w_parent != NULL && !GTK_IS_WINDOW (w_parent))
+		{
+			w_parent = gtk_widget_get_parent (w_parent);
+		}
+
+	if (GTK_IS_WINDOW (w_parent))
+		{
+			w = GTK_WINDOW (w_parent);
+		}
+
+	return w;
+}
+
 /**
- * cifra_password:
+ * autedb_cifra_password:
  * @password: una stringa da cifrare.
  *
  * Return: la @password cifrata.
  */
-static gchar
-*cifra_password (const gchar *password)
+gchar
+*autedb_cifra_password (const gchar *password)
 {
 	gchar digest[17] = "";
 	gchar pwd_gcrypt[33] = "";
@@ -166,7 +190,7 @@ static gchar
                          " AND password = '%s'"
                          " AND status <> 'E'",
                          gdaex_strescape (utente, NULL),
-                         gdaex_strescape (cifra_password (password), NULL));
+                         gdaex_strescape (autedb_cifra_password (password), NULL));
 	dm = gdaex_query (gdaex, sql);
 	if (dm == NULL || gda_data_model_get_n_rows (dm) <= 0)
 		{
@@ -196,7 +220,7 @@ static gchar
 					sql = g_strdup_printf ("UPDATE users"
 				                         " SET password = '%s'"
 				                         " WHERE code = '%s'",
-				                         gdaex_strescape (cifra_password (password_nuova), NULL),
+				                         gdaex_strescape (autedb_cifra_password (password_nuova), NULL),
 				                         gdaex_strescape (utente, NULL));
 					if (gdaex_execute (gdaex, sql) == -1)
 						{
@@ -222,7 +246,7 @@ autedb_load_users_list ()
 
 	gtk_list_store_clear (lstore_users);
 
-	sql = g_strdup_printf ("SELECT * FROM users WHERE status <> 'E'");
+	sql = g_strdup_printf ("SELECT * FROM users WHERE status <> 'E' ORDER BY surname, name, code");
 	dm = gdaex_query (gdaex, sql);
 	if (dm != NULL)
 		{
@@ -231,7 +255,7 @@ autedb_load_users_list ()
 				{
 					gtk_list_store_append (lstore_users, &iter);
 					gtk_list_store_set (lstore_users, &iter,
-					                    COL_STATUS, gdaex_data_model_get_field_value_stringify_at (dm, row, "status"),
+					                    COL_STATUS, gdaex_data_model_get_field_value_boolean_at (dm, row, "enabled") ? "" : "Disabled",
 					                    COL_CODE, gdaex_data_model_get_field_value_stringify_at (dm, row, "code"),
 					                    COL_NAME, g_strdup_printf ("%s %s",
 					                              gdaex_data_model_get_field_value_stringify_at (dm, row, "surname"),
@@ -249,6 +273,41 @@ autedb_on_user_aggiornato (gpointer instance, gpointer user_data)
 }
 
 static void
+autedb_edit_user ()
+{
+	GtkTreeIter iter;
+	gchar *code;
+
+	if (gtk_tree_selection_get_selected (sel_users, NULL, &iter))
+		{
+			GtkWidget *w;
+
+			gtk_tree_model_get (GTK_TREE_MODEL (lstore_users), &iter,
+			                    COL_CODE, &code,
+								-1);
+
+			User *u = user_new (gtkbuilder, gdaex, guifile, formdir, code);
+
+			g_signal_connect (G_OBJECT (u), "aggiornato",
+			                  G_CALLBACK (autedb_on_user_aggiornato), NULL);
+
+			w = user_get_widget (u);
+			gtk_window_set_transient_for (GTK_WINDOW (w), autedb_get_gtkwidget_parent_gtkwindow (w_users));
+			gtk_widget_show (w);
+		}
+	else
+		{
+			GtkWidget *dialog = gtk_message_dialog_new (autedb_get_gtkwidget_parent_gtkwindow (w_users),
+											 GTK_DIALOG_DESTROY_WITH_PARENT,
+											 GTK_MESSAGE_WARNING,
+											 GTK_BUTTONS_OK,
+											 "Occorre prima selezionare un modello");
+			gtk_dialog_run (GTK_DIALOG (dialog));
+			gtk_widget_destroy (dialog);
+		}
+}
+
+static void
 autedb_on_btn_new_clicked (GtkButton *button,
                            gpointer user_data)
 {
@@ -260,14 +319,7 @@ autedb_on_btn_new_clicked (GtkButton *button,
 	                  G_CALLBACK (autedb_on_user_aggiornato), NULL);
 
 	w = user_get_widget (u);
-	/*if (priv->selezione)
-		{
-			gtk_window_set_transient_for (GTK_WINDOW (w), GTK_WINDOW (priv->widget));
-		}
-	else
-		{
-			gtk_window_set_transient_for (GTK_WINDOW (w), GTK_WINDOW (gtk_builder_get_object (priv->commons->gtkbuilder, "w_main")));
-		}*/
+	gtk_window_set_transient_for (GTK_WINDOW (w), autedb_get_gtkwidget_parent_gtkwindow (w_users));
 	gtk_widget_show (w);
 }
   
@@ -275,6 +327,7 @@ static void
 autedb_on_btn_edit_clicked (GtkButton *button,
                            gpointer user_data)
 {
+	autedb_edit_user ();
 }
   
 static void
@@ -289,12 +342,12 @@ autedb_on_btn_delete_clicked (GtkButton *button,
 
 	if (gtk_tree_selection_get_selected (sel_users, NULL, &iter))
 		{
-			/*dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_builder_get_object (priv->commons->gtkbuilder, "w_main")),
+			dialog = gtk_message_dialog_new (autedb_get_gtkwidget_parent_gtkwindow (w_users),
 											 GTK_DIALOG_DESTROY_WITH_PARENT,
 											 GTK_MESSAGE_QUESTION,
 											 GTK_BUTTONS_YES_NO,
-											 "Sicuro di voler eliminare il modello selezionato?");
-			risp = gtk_dialog_run (GTK_DIALOG (dialog));*/
+											 "Sicuro di voler eliminare l'utente selezionato?");
+			risp = gtk_dialog_run (GTK_DIALOG (dialog));
 			if (risp == GTK_RESPONSE_YES)
 				{
 					gtk_tree_model_get (GTK_TREE_MODEL (lstore_users), &iter,
@@ -306,20 +359,29 @@ autedb_on_btn_delete_clicked (GtkButton *button,
 
 					autedb_load_users_list ();
 				}
-			/*gtk_widget_destroy (dialog);*/
+			gtk_widget_destroy (dialog);
 		}
 	else
 		{
-			/*dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_builder_get_object (priv->commons->gtkbuilder, "w_main")),
+			dialog = gtk_message_dialog_new (autedb_get_gtkwidget_parent_gtkwindow (w_users),
 											 GTK_DIALOG_DESTROY_WITH_PARENT,
 											 GTK_MESSAGE_WARNING,
 											 GTK_BUTTONS_OK,
 											 "Occorre prima selezionare un modello");
 			gtk_dialog_run (GTK_DIALOG (dialog));
-			gtk_widget_destroy (dialog);*/
+			gtk_widget_destroy (dialog);
 		}
 }
-  
+
+static void
+autedb_on_trv_users_row_activated (GtkTreeView *tree_view,
+                                             GtkTreePath *tree_path,
+											 GtkTreeViewColumn *column,
+											 gpointer user_data)
+{
+	autedb_edit_user ();
+}
+
 static void
 autedb_on_btn_find_clicked (GtkButton *button,
                            gpointer user_data)
@@ -407,15 +469,13 @@ gchar
 }
 
 /**
- * get_user_gui_manager:
+ * get_management_gui:
  * @parameters:
  *
  */
 GtkWidget
-*get_user_gui_manager (GSList *parameters)
+*get_management_gui (GSList *parameters)
 {
-	GtkWidget *w;
-
 	GError *error;
 
 	error = NULL;
@@ -438,8 +498,8 @@ GtkWidget
 			return NULL;
 		}
 
-	w = GTK_WIDGET (gtk_builder_get_object (gtkbuilder, "vbx_users_list"));
-	if (w == NULL)
+	w_users = GTK_WIDGET (gtk_builder_get_object (gtkbuilder, "vbx_users_list"));
+	if (w_users == NULL)
 		{
 			g_warning ("Unable to find the widget vbx_users_list.");
 			return NULL;
@@ -448,6 +508,9 @@ GtkWidget
 	trv_users = GTK_TREE_VIEW (gtk_builder_get_object (gtkbuilder, "treeview1"));
 	lstore_users = GTK_LIST_STORE (gtk_builder_get_object (gtkbuilder, "lstore_users"));
 	sel_users = gtk_tree_view_get_selection (trv_users);
+
+	g_signal_connect (gtk_builder_get_object (gtkbuilder, "treeview1"),
+	                  "row-activated", G_CALLBACK (autedb_on_trv_users_row_activated), NULL);
 
 	g_signal_connect (G_OBJECT (gtk_builder_get_object (gtkbuilder, "button1")), "clicked",
 	                  G_CALLBACK (autedb_on_btn_new_clicked), NULL);
@@ -460,258 +523,5 @@ GtkWidget
 
 	autedb_load_users_list ();
 
-	return w;
-}
-
-/**
- * crea_utente:
- * @parameters:
- * @codice:
- * @password:
- */
-gboolean
-crea_utente (GSList *parameters, const gchar *codice, const gchar *password)
-{
-	gchar *codice_;
-	gchar *password_;
-	gchar *cnc_string;
-	gchar *sql;
-	GdaEx *gdaex;
-	GdaDataModel *dm;
-
-	if (codice == FALSE || password == NULL)
-		{
-			g_warning ("codice o password nulli.");
-			return FALSE;
-		}
-
-	codice_ = g_strstrip (g_strdup (codice));
-	password_ = g_strstrip (g_strdup (password));
-
-	if (strcmp (codice_, "") == 0 || strcmp (password_, "") == 0)
-		{
-			g_warning ("codice o password vuoti.");
-			return FALSE;
-		}
-
-	cnc_string = NULL;
-
-#ifdef HAVE_LIBCONFI
-	/* the first and only parameters must be a Confi object */
-	/* leggo i parametri di connessione dalla configurazione */
-	if (IS_CONFI (parameters->data))
-		{
-			if (!get_connection_parameters_from_confi (CONFI (parameters->data), &cnc_string))
-				{
-					cnc_string = NULL;
-				}
-		}
-#endif
-
-	if (cnc_string == NULL)
-		{
-			GSList *param;
-
-			param = g_slist_next (parameters);
-			if (param != NULL && param->data != NULL)
-				{
-					cnc_string = g_strdup ((gchar *)param->data);
-					cnc_string = g_strstrip (cnc_string);
-					if (g_strcmp0 (cnc_string, "") == 0)
-						{
-							cnc_string = NULL;
-						}
-				}
-		}
-
-	if (cnc_string == NULL)
-		{
-			return FALSE;
-		}
-
-	/* creo un oggetto GdaO */
-	gdaex = gdaex_new_from_string (cnc_string);
-	if (gdaex == NULL) return FALSE;
-
-	/* controllo se esiste gia' */
-	sql = g_strdup_printf ("SELECT code FROM users WHERE code = '%s'",
-                         gdaex_strescape (codice_, NULL));
-	dm = gdaex_query (gdaex, sql);
-	if (dm != NULL && gda_data_model_get_n_rows (dm) > 0)
-		{
-			/* aggiorno l'utente */
-			sql = g_strdup_printf ("UPDATE users SET password = '%s' WHERE code = '%s'",
-			                       gdaex_strescape (cifra_password (password_), NULL),
-			                       gdaex_strescape (codice_, NULL));
-		}
-	else
-		{
-			/* creo l'utente */
-			sql = g_strdup_printf ("INSERT INTO users VALUES ('%s', '%s', '')",
-			                       gdaex_strescape (codice_, NULL),
-			                       gdaex_strescape (cifra_password (password_), NULL));
-		}
-
-	return (gdaex_execute (gdaex, sql) >= 0);
-}
-
-/**
- * modifice_utente:
- * @parameters:
- * @codice:
- * @password:
- */
-gboolean
-modifica_utente (GSList *parameters, const gchar *codice, const gchar *password)
-{
-	gchar *codice_;
-	gchar *password_;
-	gchar *cnc_string;
-	gchar *sql;
-	GdaEx *gdaex;
-	GdaDataModel *dm;
-
-	if (codice == FALSE || password == NULL)
-		{
-			g_warning ("codice o password nulli.");
-			return FALSE;
-		}
-
-	codice_ = g_strstrip (g_strdup (codice));
-	password_ = g_strstrip (g_strdup (password));
-
-	if (strcmp (codice_, "") == 0 || strcmp (password_, "") == 0)
-		{
-			g_warning ("codice o password vuoti.");
-			return FALSE;
-		}
-
-#ifdef HAVE_LIBCONFI
-	/* the first and only parameters must be a Confi object */
-	/* leggo i parametri di connessione dalla configurazione */
-	if (IS_CONFI (parameters->data))
-		{
-			if (!get_connection_parameters_from_confi (CONFI (parameters->data), &cnc_string))
-				{
-					cnc_string = NULL;
-				}
-		}
-#endif
-
-	if (cnc_string == NULL)
-		{
-			GSList *param;
-
-			param = g_slist_next (parameters);
-			if (param != NULL && param->data != NULL)
-				{
-					cnc_string = g_strdup ((gchar *)param->data);
-					cnc_string = g_strstrip (cnc_string);
-					if (g_strcmp0 (cnc_string, "") == 0)
-						{
-							cnc_string = NULL;
-						}
-				}
-		}
-
-	if (cnc_string == NULL)
-		{
-			return FALSE;
-		}
-
-	/* creo un oggetto GdaEx */
-	gdaex = gdaex_new_from_string (cnc_string);
-	if (gdaex == NULL) return FALSE;
-
-	/* controllo se non esiste */
-	sql = g_strdup_printf ("SELECT code FROM users WHERE code = '%s'",
-                         gdaex_strescape (codice_, NULL));
-	dm = gdaex_query (gdaex, sql);
-	if (dm == NULL || gda_data_model_get_n_rows (dm) <= 0)
-		{
-			/* creo l'utente */
-			sql = g_strdup_printf ("INSERT INTO users VALUES ('%s', '%s', '')",
-			                       gdaex_strescape (codice_, NULL),
-			                       gdaex_strescape (cifra_password (password_), NULL));
-		}
-	else
-		{
-			/* aggiorno l'utente */
-			sql = g_strdup_printf ("UPDATE users SET password = '%s' WHERE code = '%s'",
-			                       gdaex_strescape (cifra_password (password_), NULL),
-			                       gdaex_strescape (codice_, NULL));
-		}
-
-	return (gdaex_execute (gdaex, sql) >= 0);
-}
-
-/**
- * elimina_utente:
- * @parameters:
- * @codice:
- */
-gboolean
-elimina_utente (GSList *parameters, const gchar *codice)
-{
-	gchar *codice_;
-	gchar *cnc_string;
-	gchar *sql;
-	GdaEx *gdaex;
-
-	if (codice == FALSE)
-		{
-			g_warning ("codice nullo.");
-			return FALSE;
-		}
-
-	codice_ = g_strstrip (g_strdup (codice));
-
-	if (strcmp (codice_, "") == 0)
-		{
-			g_warning ("codice vuoto.");
-			return FALSE;
-		}
-
-#ifdef HAVE_LIBCONFI
-	/* the first and only parameters must be a Confi object */
-	/* leggo i parametri di connessione dalla configurazione */
-	if (IS_CONFI (parameters->data))
-		{
-			if (!get_connection_parameters_from_confi (CONFI (parameters->data), &cnc_string))
-				{
-					cnc_string = NULL;
-				}
-		}
-#endif
-
-	if (cnc_string == NULL)
-		{
-			GSList *param;
-
-			param = g_slist_next (parameters);
-			if (param != NULL && param->data != NULL)
-				{
-					cnc_string = g_strdup ((gchar *)param->data);
-					cnc_string = g_strstrip (cnc_string);
-					if (g_strcmp0 (cnc_string, "") == 0)
-						{
-							cnc_string = NULL;
-						}
-				}
-		}
-
-	if (cnc_string == NULL)
-		{
-			return FALSE;
-		}
-
-	/* creo un oggetto GdaEx */
-	gdaex = gdaex_new_from_string (cnc_string);
-	if (gdaex == NULL) return FALSE;
-
-	/* elimino _logicamente_ l'utente */
-	sql = g_strdup_printf ("UPDATE users SET status = 'E' WHERE code = '%s'",
-                           gdaex_strescape (codice_, NULL));
-
-	return (gdaex_execute (gdaex, sql) >= 0);
+	return w_users;
 }

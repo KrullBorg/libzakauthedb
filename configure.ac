@@ -19,7 +19,7 @@ AC_PROG_LIBTOOL
 
 # Checks for libraries.
 PKG_CHECK_MODULES(LIBAUTEDB, [gtk+-2.0 >= 2.16.0
-                              libaute >= 0.0.2
+                              libaute >= 0.1.0
                               libgtkform >= 0.1.4])
 
 AC_SUBST(LIBAUTEDB_CFLAGS)

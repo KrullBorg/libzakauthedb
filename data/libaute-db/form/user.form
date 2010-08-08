@@ -10,7 +10,7 @@
 		</field>
 	</widget>
 
-	<widget type="label" name="label114">
+	<widget type="label" name="label14">
 		<field type="text" name="password">
 		</field>
 	</widget>

@@ -20,6 +20,7 @@
 #include <libgtkform/form.h>
 
 #include "user.h"
+#include "aute_db.h"
 
 static void user_class_init (UserClass *klass);
 static void user_init (User *user);
@@ -51,7 +52,8 @@ static void user_on_btn_salva_clicked (GtkButton *button,
 
 enum
 {
-	TXT_CODE
+	TXT_CODE,
+	LBL_PASSWORD
 };
 
 typedef struct _UserPrivate UserPrivate;
@@ -152,6 +154,7 @@ User
 
 	priv->objects = gtk_form_get_objects_by_name (priv->form,
 	                                              "entry1",
+	                                              "label14",
 	                                              NULL);
 
 	g_signal_connect (priv->w,
@@ -226,6 +229,8 @@ user_salva (User *user)
 
 	if (priv->code == NULL || g_strcmp0 (priv->code, "") == 0)
 		{
+			gtk_label_set_text (GTK_LABEL (priv->objects[LBL_PASSWORD]),
+			                    autedb_cifra_password (gtk_entry_get_text (GTK_ENTRY (priv->objects[TXT_CODE]))));
 			sql = gtk_form_get_sql (priv->form, GTK_FORM_SQL_INSERT);
 		}
 	else
