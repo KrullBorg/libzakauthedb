@@ -29,8 +29,13 @@
 	#include <libconfi.h>
 #endif
 
+#include "user.h"
+
 static GtkBuilder *gtkbuilder;
 static GdaEx *gdaex;
+
+static gchar *guifile;
+static gchar *formdir;
 
 static GtkWidget *txt_utente;
 static GtkWidget *txt_password;
@@ -238,9 +243,32 @@ autedb_load_users_list ()
 }
 
 static void
+autedb_on_user_aggiornato (gpointer instance, gpointer user_data)
+{
+	autedb_load_users_list ();
+}
+
+static void
 autedb_on_btn_new_clicked (GtkButton *button,
                            gpointer user_data)
 {
+	GtkWidget *w;
+
+	User *u = user_new (gtkbuilder, gdaex, guifile, formdir, NULL);
+
+	g_signal_connect (G_OBJECT (u), "aggiornato",
+	                  G_CALLBACK (autedb_on_user_aggiornato), NULL);
+
+	w = user_get_widget (u);
+	/*if (priv->selezione)
+		{
+			gtk_window_set_transient_for (GTK_WINDOW (w), GTK_WINDOW (priv->widget));
+		}
+	else
+		{
+			gtk_window_set_transient_for (GTK_WINDOW (w), GTK_WINDOW (gtk_builder_get_object (priv->commons->gtkbuilder, "w_main")));
+		}*/
+	gtk_widget_show (w);
 }
   
 static void
@@ -253,6 +281,43 @@ static void
 autedb_on_btn_delete_clicked (GtkButton *button,
                            gpointer user_data)
 {
+	GtkWidget *dialog;
+	gboolean risp;
+
+	GtkTreeIter iter;
+	gchar *code;
+
+	if (gtk_tree_selection_get_selected (sel_users, NULL, &iter))
+		{
+			/*dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_builder_get_object (priv->commons->gtkbuilder, "w_main")),
+											 GTK_DIALOG_DESTROY_WITH_PARENT,
+											 GTK_MESSAGE_QUESTION,
+											 GTK_BUTTONS_YES_NO,
+											 "Sicuro di voler eliminare il modello selezionato?");
+			risp = gtk_dialog_run (GTK_DIALOG (dialog));*/
+			if (risp == GTK_RESPONSE_YES)
+				{
+					gtk_tree_model_get (GTK_TREE_MODEL (lstore_users), &iter,
+											COL_CODE, &code,
+											-1);
+
+					gdaex_execute (gdaex,
+					               g_strdup_printf ("UPDATE users SET status = 'E' WHERE code = '%s'", code));
+
+					autedb_load_users_list ();
+				}
+			/*gtk_widget_destroy (dialog);*/
+		}
+	else
+		{
+			/*dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_builder_get_object (priv->commons->gtkbuilder, "w_main")),
+											 GTK_DIALOG_DESTROY_WITH_PARENT,
+											 GTK_MESSAGE_WARNING,
+											 GTK_BUTTONS_OK,
+											 "Occorre prima selezionare un modello");
+			gtk_dialog_run (GTK_DIALOG (dialog));
+			gtk_widget_destroy (dialog);*/
+		}
 }
   
 static void
@@ -286,7 +351,18 @@ gchar
 	GUIDIR = g_build_filename (g_win32_get_package_installation_directory_of_module (NULL), "share", "libaute-db", "gui", NULL);
 #endif
 
-	if (!gtk_builder_add_objects_from_file (gtkbuilder, g_build_filename (GUIDIR, "autedb.gui", NULL),
+#ifdef G_OS_WIN32
+#undef FORMDIR
+
+	gchar *FORMDIR;
+
+	FORMDIR = g_build_filename (g_win32_get_package_installation_directory_of_module (NULL), "share", "libaute-db", "form", NULL);
+#endif
+
+	formdir = g_strdup (FORMDIR);
+
+	guifile = g_build_filename (GUIDIR, "autedb.gui", NULL);
+	if (!gtk_builder_add_objects_from_file (gtkbuilder, guifile,
 	                                        g_strsplit ("diag_main", "|", -1),
 	                                        &error))
 		{
