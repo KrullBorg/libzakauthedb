@@ -47,7 +47,6 @@ enum
 	COL_STATUS,
 	COL_CODE,
 	COL_NAME,
-	COL_LAST_ACCESS,
 	COL_PASSWORD_EXPIRATION
 };
 
@@ -232,7 +231,6 @@ autedb_load_users_list ()
 					                    COL_NAME, g_strdup_printf ("%s %s",
 					                              gdaex_data_model_get_field_value_stringify_at (dm, row, "surname"),
 					                              gdaex_data_model_get_field_value_stringify_at (dm, row, "name")),
-					                    COL_LAST_ACCESS, gtk_form_field_datetime_get_str_from_tm (gdaex_data_model_get_field_value_tm_at (dm, row, "last_access"), "%d/%m/%Y %H.%M.%S"),
 					                    COL_PASSWORD_EXPIRATION, gtk_form_field_datetime_get_str_from_tm (gdaex_data_model_get_field_value_tm_at (dm, row, "password_expiration"), "%d/%m/%Y %H.%M.%S"),
 					                    -1);
 				}

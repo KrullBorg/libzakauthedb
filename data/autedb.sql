@@ -4,7 +4,6 @@ CREATE TABLE users (
 	surname varchar(100) DEFAULT '',
 	name varchar(100) DEFAULT '',
 	enabled bool,
-	last_access time,
 	password_expiration time,
 	notes text DEFAULT '',
 	status varchar(1) DEFAULT '',
@@ -12,5 +11,5 @@ CREATE TABLE users (
 );
 
 /* initial user with password 'root' */
-INSERT INTO users (code, password, surnam, enabled, status)
+INSERT INTO users (code, password, surname, enabled, status)
 VALUES ('root', '63a9f0ea7bb98050796b649e85481845', 'Root', TRUE, '');

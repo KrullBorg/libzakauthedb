@@ -31,13 +31,6 @@
 		</field>
 	</widget>
 
-	<widget type="label" name="label113" label="label10">
-		<field type="datetime" name="last_access">
-			<datetime-type>datetime</datetime-type>
-			<display-format>%d/%m/%Y %H.%M.%S</display-format>
-		</field>
-	</widget>
-
 	<widget type="entry" name="entry4" label="label11">
 		<field type="datetime" name="password_expiration">
 			<datetime-type>datetime</datetime-type>
