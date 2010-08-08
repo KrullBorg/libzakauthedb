@@ -213,8 +213,6 @@
       <column type="gchararray"/>
       <!-- column-name surname_name -->
       <column type="gchararray"/>
-      <!-- column-name last_access -->
-      <column type="gchararray"/>
       <!-- column-name password_expiration -->
       <column type="gchararray"/>
     </columns>
@@ -272,23 +270,12 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkTreeViewColumn" id="treeviewcolumn4">
-                    <property name="title">Last access</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="cellrenderertext4"/>
-                      <attributes>
-                        <attribute name="text">3</attribute>
-                      </attributes>
-                    </child>
-                  </object>
-                </child>
-                <child>
                   <object class="GtkTreeViewColumn" id="treeviewcolumn5">
                     <property name="title">Password expiration</property>
                     <child>
                       <object class="GtkCellRendererText" id="cellrenderertext5"/>
                       <attributes>
-                        <attribute name="text">4</attribute>
+                        <attribute name="text">3</attribute>
                       </attributes>
                     </child>
                   </object>
