@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([libaute-db], [0.1.0], [azagli@libero.it])
+AC_INIT([libaute-db], [0.1.1], [azagli@libero.it])
 AC_CONFIG_SRCDIR([src/aute_db.c])
 AC_CONFIG_HEADER([config.h])
 

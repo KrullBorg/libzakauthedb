@@ -185,12 +185,12 @@ static gchar
 	password = g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_password))));
 
 	sql = g_strdup_printf ("SELECT code"
-	                     " FROM users"
-                         " WHERE code = '%s'"
-                         " AND password = '%s'"
-                         " AND status <> 'E'",
-                         gdaex_strescape (utente, NULL),
-                         gdaex_strescape (autedb_cifra_password (password), NULL));
+	                       " FROM users"
+	                       " WHERE code = '%s'"
+	                       " AND password = '%s'"
+	                       " AND status <> 'E'",
+	                       gdaex_strescape (utente, NULL),
+	                       gdaex_strescape (autedb_cifra_password (password), NULL));
 	dm = gdaex_query (gdaex, sql);
 	if (dm == NULL || gda_data_model_get_n_rows (dm) <= 0)
 		{
@@ -207,7 +207,7 @@ static gchar
 			if (strlen (password_nuova) == 0 || strcmp (g_strstrip (password_nuova), "") == 0)
 				{
 					/* TO DO */
-					g_warning ("La nuova password è vuota.");
+					g_warning ("The new password cannot be empty.");
 				}
 			else if (strcmp (g_strstrip (password_nuova), g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_password_conferma))))) != 0)
 				{
@@ -218,14 +218,14 @@ static gchar
 				{
 					/* cambio la password */
 					sql = g_strdup_printf ("UPDATE users"
-				                         " SET password = '%s'"
-				                         " WHERE code = '%s'",
-				                         gdaex_strescape (autedb_cifra_password (password_nuova), NULL),
-				                         gdaex_strescape (utente, NULL));
+					                       " SET password = '%s'"
+					                       " WHERE code = '%s'",
+					                       gdaex_strescape (autedb_cifra_password (password_nuova), NULL),
+					                       gdaex_strescape (utente, NULL));
 					if (gdaex_execute (gdaex, sql) == -1)
 						{
 							/* TO DO */
-							g_warning ("Errore durante la modifica della password.");
+							g_warning ("Error changing password.");
 							return NULL;
 						}
 				}
@@ -284,7 +284,7 @@ autedb_edit_user ()
 
 			gtk_tree_model_get (GTK_TREE_MODEL (lstore_users), &iter,
 			                    COL_CODE, &code,
-								-1);
+			                    -1);
 
 			User *u = user_new (gtkbuilder, gdaex, guifile, formdir, code);
 
@@ -298,10 +298,10 @@ autedb_edit_user ()
 	else
 		{
 			GtkWidget *dialog = gtk_message_dialog_new (autedb_get_gtkwidget_parent_gtkwindow (w_users),
-											 GTK_DIALOG_DESTROY_WITH_PARENT,
-											 GTK_MESSAGE_WARNING,
-											 GTK_BUTTONS_OK,
-											 "Occorre prima selezionare un modello");
+			                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+			                                 GTK_MESSAGE_WARNING,
+			                                 GTK_BUTTONS_OK,
+			                                 "You must before select a user.");
 			gtk_dialog_run (GTK_DIALOG (dialog));
 			gtk_widget_destroy (dialog);
 		}
@@ -343,16 +343,16 @@ autedb_on_btn_delete_clicked (GtkButton *button,
 	if (gtk_tree_selection_get_selected (sel_users, NULL, &iter))
 		{
 			dialog = gtk_message_dialog_new (autedb_get_gtkwidget_parent_gtkwindow (w_users),
-											 GTK_DIALOG_DESTROY_WITH_PARENT,
-											 GTK_MESSAGE_QUESTION,
-											 GTK_BUTTONS_YES_NO,
-											 "Sicuro di voler eliminare l'utente selezionato?");
+			                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+			                                 GTK_MESSAGE_QUESTION,
+			                                 GTK_BUTTONS_YES_NO,
+			                                 "Sicuro di voler eliminare l'utente selezionato?");
 			risp = gtk_dialog_run (GTK_DIALOG (dialog));
 			if (risp == GTK_RESPONSE_YES)
 				{
 					gtk_tree_model_get (GTK_TREE_MODEL (lstore_users), &iter,
-											COL_CODE, &code,
-											-1);
+					                    COL_CODE, &code,
+					                    -1);
 
 					gdaex_execute (gdaex,
 					               g_strdup_printf ("UPDATE users SET status = 'E' WHERE code = '%s'", code));
@@ -364,10 +364,10 @@ autedb_on_btn_delete_clicked (GtkButton *button,
 	else
 		{
 			dialog = gtk_message_dialog_new (autedb_get_gtkwidget_parent_gtkwindow (w_users),
-											 GTK_DIALOG_DESTROY_WITH_PARENT,
-											 GTK_MESSAGE_WARNING,
-											 GTK_BUTTONS_OK,
-											 "Occorre prima selezionare un modello");
+			                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+			                                 GTK_MESSAGE_WARNING,
+			                                 GTK_BUTTONS_OK,
+			                                 "Occorre prima selezionare un modello");
 			gtk_dialog_run (GTK_DIALOG (dialog));
 			gtk_widget_destroy (dialog);
 		}
@@ -375,9 +375,9 @@ autedb_on_btn_delete_clicked (GtkButton *button,
 
 static void
 autedb_on_trv_users_row_activated (GtkTreeView *tree_view,
-                                             GtkTreePath *tree_path,
-											 GtkTreeViewColumn *column,
-											 gpointer user_data)
+                                   GtkTreePath *tree_path,
+                                   GtkTreeViewColumn *column,
+                                   gpointer user_data)
 {
 	autedb_edit_user ();
 }
@@ -407,18 +407,28 @@ gchar
 
 #ifdef G_OS_WIN32
 #undef GUIDIR
-
-	gchar *GUIDIR;
-
-	GUIDIR = g_build_filename (g_win32_get_package_installation_directory_of_module (NULL), "share", "libaute-db", "gui", NULL);
-#endif
-
-#ifdef G_OS_WIN32
 #undef FORMDIR
 
+	gchar *GUIDIR;
 	gchar *FORMDIR;
 
-	FORMDIR = g_build_filename (g_win32_get_package_installation_directory_of_module (NULL), "share", "libaute-db", "form", NULL);
+	gchar *moddir;
+	gchar *p;
+
+	moddir = g_win32_get_package_installation_directory_of_module (NULL);
+
+	p = g_strrstr (moddir, g_strdup_printf ("%c", G_DIR_SEPARATOR));
+	if (p != NULL
+	    && g_ascii_strcasecmp (p + 1, "src") == 0)
+		{
+			GUIDIR = g_build_filename ("/mingw", "share", "libaute-db", "gui", NULL);
+			FORMDIR = g_build_filename ("/mingw", "share", "libaute-db", "form", NULL);
+		}
+	else
+		{
+			GUIDIR = g_build_filename (g_win32_get_package_installation_directory_of_module (NULL), "share", "libaute-db", "gui", NULL);
+			FORMDIR = g_build_filename (g_win32_get_package_installation_directory_of_module (NULL), "share", "libaute-db", "form", NULL);
+		}
 #endif
 
 	formdir = g_strdup (FORMDIR);
@@ -428,8 +438,8 @@ gchar
 	                                        g_strsplit ("diag_main", "|", -1),
 	                                        &error))
 		{
-			g_warning ("Impossibile trovare il file di definizione dell'interfaccia utente: %s.",
-			         error != NULL && error->message != NULL ? error->message : "no details");
+			g_warning ("Unable to find the gui file: %s.",
+			           error != NULL && error->message != NULL ? error->message : "no details");
 			return NULL;
 		}
 
