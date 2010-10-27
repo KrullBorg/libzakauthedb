@@ -419,15 +419,16 @@ gchar
 
 	p = g_strrstr (moddir, g_strdup_printf ("%c", G_DIR_SEPARATOR));
 	if (p != NULL
-	    && g_ascii_strcasecmp (p + 1, "src") == 0)
+	    && (g_ascii_strcasecmp (p + 1, "src") == 0
+	    || g_ascii_strcasecmp (p + 1, ".libs") == 0))
 		{
 			GUIDIR = g_build_filename ("/mingw", "share", "libaute-db", "gui", NULL);
 			FORMDIR = g_build_filename ("/mingw", "share", "libaute-db", "form", NULL);
 		}
 	else
 		{
-			GUIDIR = g_build_filename (g_win32_get_package_installation_directory_of_module (NULL), "share", "libaute-db", "gui", NULL);
-			FORMDIR = g_build_filename (g_win32_get_package_installation_directory_of_module (NULL), "share", "libaute-db", "form", NULL);
+			GUIDIR = g_build_filename (moddir, "share", "libaute-db", "gui", NULL);
+			FORMDIR = g_build_filename (moddir, "share", "libaute-db", "form", NULL);
 		}
 #endif
 
