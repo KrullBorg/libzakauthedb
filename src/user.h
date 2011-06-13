@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2010 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2010-2011 Andrea Zagli <azagli@libero.it>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,7 +24,7 @@
 #include <glib-object.h>
 
 #include <gtk/gtk.h>
-#include <libgdaex.h>
+#include <libgdaex/libgdaex.h>
 
 G_BEGIN_DECLS
 

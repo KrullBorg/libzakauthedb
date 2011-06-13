@@ -2,11 +2,14 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([libaute-db], [0.1.1], [azagli@libero.it])
+AC_INIT([libaute-db], [0.3.0], [azagli@libero.it])
 AC_CONFIG_SRCDIR([src/aute_db.c])
 AC_CONFIG_HEADER([config.h])
 
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE(-Wall)
+
+m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
+
 AM_MAINTAINER_MODE
 
 AC_CANONICAL_SYSTEM
@@ -20,7 +23,7 @@ AC_PROG_LIBTOOL
 # Checks for libraries.
 PKG_CHECK_MODULES(LIBAUTEDB, [gtk+-2.0 >= 2.16.0
                               libaute >= 0.1.0
-                              libgtkform >= 0.1.4])
+                              libgtkform >= 0.3.0])
 
 AC_SUBST(LIBAUTEDB_CFLAGS)
 AC_SUBST(LIBAUTEDB_LIBS)

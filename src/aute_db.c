@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2005-2011 Andrea Zagli <azagli@libero.it>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
   
 #include <gtk/gtk.h>
 #include <gcrypt.h>
-#include <libgdaex.h>
+#include <libgdaex/libgdaex.h>
 #include <libgtkform/fielddatetime.h>
 
 #ifdef HAVE_LIBCONFI
