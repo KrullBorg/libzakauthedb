@@ -403,6 +403,9 @@ gchar
 			return NULL;
 		}
 
+	/* inizializzo libgcrypt */
+	gcry_check_version (GCRYPT_VERSION);
+
 	gtkbuilder = gtk_builder_new ();
 
 #ifdef G_OS_WIN32
