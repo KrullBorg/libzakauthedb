@@ -39,6 +39,11 @@ AM_PATH_LIBGCRYPT(1.2.1, :, [AC_MSG_ERROR([libgcrypt >= 1.2.1 not found.])])
 AC_SUBST(LIBGCRYPT_CFLAGS)
 AC_SUBST(LIBGCRYPT_LIBS)
 
+AM_PATH_GPG_ERROR(1.10, :, [AC_MSG_ERROR([libgpgerror >= 1.10 not found.])])
+
+AC_SUBST(GPG_ERROR_CFLAGS)
+AC_SUBST(GPG_ERROR_LIBS)
+
 # Checks for header files.
 
 # Checks for typedefs, structures, and compiler characteristics.
