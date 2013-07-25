@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2010-2013 Andrea Zagli <azagli@libero.it>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,7 +30,9 @@ main (int argc, char **argv)
 
 	aute = aute_new ();
 
+	/* the libaute module to use */
 	params = g_slist_append (params, argv[1]);
+	/* the libgda connection string */
 	params = g_slist_append (params, argv[2]);
 
 	aute_set_config (aute, params);
