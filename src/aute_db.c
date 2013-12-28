@@ -409,11 +409,7 @@ gchar
 	gtkbuilder = gtk_builder_new ();
 
 #ifdef G_OS_WIN32
-#undef GUIDIR
-#undef FORMDIR
-
-	gchar *GUIDIR;
-	gchar *FORMDIR;
+	gchar *guidir;
 
 	gchar *moddir;
 	gchar *p;
@@ -425,19 +421,25 @@ gchar
 	    && (g_ascii_strcasecmp (p + 1, "src") == 0
 	    || g_ascii_strcasecmp (p + 1, ".libs") == 0))
 		{
-			GUIDIR = g_build_filename ("/mingw", "share", "libaute-db", "gui", NULL);
-			FORMDIR = g_build_filename ("/mingw", "share", "libaute-db", "form", NULL);
+			guidir = g_strdup (GUIDIR);
+			formdir = g_strdup (FORMDIR);
+
+#undef GUIDIR
+#undef FORMDIR
 		}
 	else
 		{
-			GUIDIR = g_build_filename (moddir, "share", "libaute-db", "gui", NULL);
-			FORMDIR = g_build_filename (moddir, "share", "libaute-db", "form", NULL);
+			guidir = g_build_filename (moddir, "share", PACKAGE, "gui", NULL);
+			formdir = g_build_filename (moddir, "share", PACKAGE, "form", NULL);
 		}
-#endif
+
+#else
 
 	formdir = g_strdup (FORMDIR);
 
-	guifile = g_build_filename (GUIDIR, "autedb.gui", NULL);
+#endif
+
+	guifile = g_build_filename (guidir, "autedb.gui", NULL);
 	if (!gtk_builder_add_objects_from_file (gtkbuilder, guifile,
 	                                        g_strsplit ("diag_main", "|", -1),
 	                                        &error))
