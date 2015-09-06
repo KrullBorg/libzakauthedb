@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2013 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2010-2015 Andrea Zagli <azagli@libero.it>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,26 +18,26 @@
 
 #include <gtk/gtk.h>
 
-#include <libaute.h>
+#include <libzakauth.h>
 
 int
 main (int argc, char **argv)
 {
-	Aute *aute;
+	ZakAuth *aute;
 	GSList *params;
 
 	gtk_init (&argc, &argv);
 
-	aute = aute_new ();
+	aute = zak_auth_new ();
 
 	/* the libaute module to use */
 	params = g_slist_append (params, argv[1]);
 	/* the libgda connection string */
 	params = g_slist_append (params, argv[2]);
 
-	aute_set_config (aute, params);
+	zak_auth_set_config (aute, params);
 
-	g_message ("User %s\n", aute_autentica (aute));
+	g_message ("User %s\n", zak_auth_auth (aute));
 
 	return 0;
 }

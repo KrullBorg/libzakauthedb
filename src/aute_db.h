@@ -1,5 +1,5 @@
-/* 
- * Copyright (C) 2010 Andrea Zagli <azagli@libero.it>
+/*
+ * Copyright (C) 2010-2015 Andrea Zagli <azagli@libero.it>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,15 +17,15 @@
  *
  */
 
-#ifndef __AUTEDB_H__
-#define __AUTEDB_H__
+#ifndef __ZAKAUTHDB_H__
+#define __ZAKAUTHDB_H__
 
 G_BEGIN_DECLS
 
 
-gchar *autedb_cifra_password (const gchar *password);
+gchar *zak_auth_db_encrypt_password (const gchar *password);
 
 
 G_END_DECLS
 
-#endif /* __AUTEDB_H__ */
+#endif /* __ZAKAUTHDB_H__ */

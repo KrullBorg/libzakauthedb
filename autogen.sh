@@ -4,7 +4,7 @@
 srcdir=`dirname $0`
 test -z "$srcdir" && srcdir=.
 
-PKG_NAME="libaute-db"
+PKG_NAME="libzakauthdb"
 
 (test -f $srcdir/configure.ac \
   && test -d $srcdir/src \

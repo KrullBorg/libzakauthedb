@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2010 Andrea Zagli <azagli@libero.it>
  *
  * This library is free software; you can redistribute it and/or
@@ -230,7 +230,7 @@ user_salva (User *user)
 	if (priv->code == NULL || g_strcmp0 (priv->code, "") == 0)
 		{
 			gtk_label_set_text (GTK_LABEL (priv->objects[LBL_PASSWORD]),
-			                    autedb_cifra_password (gtk_entry_get_text (GTK_ENTRY (priv->objects[TXT_CODE]))));
+			                    zak_auth_db_encrypt_password (gtk_entry_get_text (GTK_ENTRY (priv->objects[TXT_CODE]))));
 			sql = gtk_form_get_sql (priv->form, GTK_FORM_SQL_INSERT);
 		}
 	else

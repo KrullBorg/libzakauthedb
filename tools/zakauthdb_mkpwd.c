@@ -17,6 +17,7 @@
  */
 
 #include <glib.h>
+#include <glib/gprintf.h>
 #include <gcrypt.h>
 
 /**
@@ -49,7 +50,7 @@ int
 main (int argc, char **argv)
 {
 	gchar *pwd = NULL;
-	GOptionEntry entries[] = 
+	GOptionEntry entries[] =
 		{
 			{ "password", 'p', 0, G_OPTION_ARG_STRING, &pwd, "La stringa da cifrare", NULL },
 			{ NULL }

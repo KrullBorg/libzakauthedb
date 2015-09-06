@@ -6,6 +6,6 @@ AM_CPPFLAGS = $(WARN_CFLAGS) \
 LIBS = $(GTK_LIBS) \
        $(LIBAUTEDB_LIBS)
 
-LDADD = ../src/libaute-db.la
+LDADD = ../src/libzakauthdb.la
 
 noinst_PROGRAMS = test

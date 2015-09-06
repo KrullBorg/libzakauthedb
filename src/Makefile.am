@@ -1,5 +1,5 @@
-guidir = $(datadir)/libaute-db/gui
-formdir = $(datadir)/libaute-db/form
+guidir = $(datadir)/libzakauthdb/gui
+formdir = $(datadir)/libzakauthdb/form
 
 AM_CPPFLAGS = $(LIBAUTEDB_CFLAGS) \
               $(LIBGCRYPT_CFLAGS) \
@@ -13,12 +13,12 @@ LIBS = $(LIBAUTEDB_LIBS) \
        $(GPG_ERROR_LIBS) \
        $(LIBCONFI_LIBS)
 
-libaute_pluginsdir = $(libdir)/libaute/plugins
-libaute_plugins_LTLIBRARIES = libaute-db.la
+libzakauth_pluginsdir = $(libdir)/libzakauth/plugins
+libzakauth_plugins_LTLIBRARIES = libzakauthdb.la
 
-libaute_db_la_SOURCES = aute_db.c \
+libzakauthdb_la_SOURCES = aute_db.c \
                         aute_db.h \
                         user.c \
                         user.h
 
-libaute_db_la_LDFLAGS = -no-undefined
+libzakauthdb_la_LDFLAGS = -no-undefined

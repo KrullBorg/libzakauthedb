@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2011 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2005-2015 Andrea Zagli <azagli@libero.it>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,8 @@
 #ifdef HAVE_CONFIG_H
 	#include "config.h"
 #endif
-  
+
+#include <glib/gprintf.h>
 #include <gtk/gtk.h>
 #include <gcrypt.h>
 #include <libgdaex/libgdaex.h>
@@ -34,6 +35,7 @@
 static GtkBuilder *gtkbuilder;
 static GdaEx *gdaex;
 
+static gchar *guidir;
 static gchar *guifile;
 static gchar *formdir;
 
@@ -64,7 +66,7 @@ get_connection_parameters_from_confi (Confi *confi, gchar **cnc_string)
 {
 	gboolean ret = TRUE;
 
-	*cnc_string = confi_path_get_value (confi, "aute/aute-db/db/cnc_string");
+	*cnc_string = confi_path_get_value (confi, "libzakauth/libzakauthdb/db/cnc_string");
 
 	if (*cnc_string == NULL
 	    || strcmp (g_strstrip (*cnc_string), "") == 0)
@@ -147,13 +149,13 @@ static GtkWindow
 }
 
 /**
- * autedb_cifra_password:
+ * zak_auth_db_encrypt_password:
  * @password: una stringa da cifrare.
  *
- * Return: la @password cifrata.
+ * Returns: the @password encrypted.
  */
 gchar
-*autedb_cifra_password (const gchar *password)
+*zak_auth_db_encrypt_password (const gchar *password)
 {
 	gchar digest[17] = "";
 	gchar pwd_gcrypt[33] = "";
@@ -190,11 +192,16 @@ static gchar
 	                       " AND password = '%s'"
 	                       " AND status <> 'E'",
 	                       gdaex_strescape (utente, NULL),
-	                       gdaex_strescape (autedb_cifra_password (password), NULL));
+	                       gdaex_strescape (zak_auth_db_encrypt_password (password), NULL));
 	dm = gdaex_query (gdaex, sql);
+	g_free (sql);
 	if (dm == NULL || gda_data_model_get_n_rows (dm) <= 0)
 		{
-			g_warning ("Utente o password non validi.");
+			if (dm != NULL)
+				{
+					g_object_unref (dm);
+				}
+			g_warning ("User name or password aren't valids.");
 			return NULL;
 		}
 
@@ -212,7 +219,7 @@ static gchar
 			else if (strcmp (g_strstrip (password_nuova), g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_password_conferma))))) != 0)
 				{
 					/* TO DO */
-					g_warning ("La nuova password e la conferma non coincidono.");
+					g_warning ("The new and confirm password don't match.");
 				}
 			else
 				{
@@ -220,7 +227,7 @@ static gchar
 					sql = g_strdup_printf ("UPDATE users"
 					                       " SET password = '%s'"
 					                       " WHERE code = '%s'",
-					                       gdaex_strescape (autedb_cifra_password (password_nuova), NULL),
+					                       gdaex_strescape (zak_auth_db_encrypt_password (password_nuova), NULL),
 					                       gdaex_strescape (utente, NULL));
 					if (gdaex_execute (gdaex, sql) == -1)
 						{
@@ -322,14 +329,14 @@ autedb_on_btn_new_clicked (GtkButton *button,
 	gtk_window_set_transient_for (GTK_WINDOW (w), autedb_get_gtkwidget_parent_gtkwindow (w_users));
 	gtk_widget_show (w);
 }
-  
+
 static void
 autedb_on_btn_edit_clicked (GtkButton *button,
                            gpointer user_data)
 {
 	autedb_edit_user ();
 }
-  
+
 static void
 autedb_on_btn_delete_clicked (GtkButton *button,
                            gpointer user_data)
@@ -387,10 +394,10 @@ autedb_on_btn_find_clicked (GtkButton *button,
                            gpointer user_data)
 {
 }
-  
+
 /* PUBLIC */
 gchar
-*autentica (GSList *parameters)
+*zak_auth_auth (GSList *parameters)
 {
 	GError *error;
 	gchar *ret = NULL;
@@ -409,7 +416,6 @@ gchar
 	gtkbuilder = gtk_builder_new ();
 
 #ifdef G_OS_WIN32
-	gchar *guidir;
 
 	gchar *moddir;
 	gchar *p;
@@ -490,7 +496,7 @@ gchar
  *
  */
 GtkWidget
-*get_management_gui (GSList *parameters)
+*zak_auth_plg_get_management_gui (GSList *parameters)
 {
 	GError *error;
 
@@ -503,7 +509,7 @@ GtkWidget
 
 	gchar *GUIDIR;
 
-	GUIDIR = g_build_filename (g_win32_get_package_installation_directory_of_module (NULL), "share", "libaute-db", "gu", NULL);
+	GUIDIR = g_build_filename (g_win32_get_package_installation_directory_of_module (NULL), "share", "libzakauthdb", "gui", NULL);
 #endif
 
 	if (!gtk_builder_add_objects_from_file (gtkbuilder, g_build_filename (GUIDIR, "autedb.gui", NULL),
