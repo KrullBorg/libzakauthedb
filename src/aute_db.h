@@ -17,15 +17,15 @@
  *
  */
 
-#ifndef __ZAKAUTHDB_H__
-#define __ZAKAUTHDB_H__
+#ifndef __ZAKAUTHEDB_H__
+#define __ZAKAUTHEDB_H__
 
 G_BEGIN_DECLS
 
 
-gchar *zak_auth_db_encrypt_password (const gchar *password);
+gchar *zak_authe_db_encrypt_password (const gchar *password);
 
 
 G_END_DECLS
 
-#endif /* __ZAKAUTHDB_H__ */
+#endif /* __ZAKAUTHEDB_H__ */

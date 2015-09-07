@@ -26,7 +26,7 @@ missing
 config.h
 stamp-h1
 tests/test
-tools/zakauthdb-mkpwd
+tools/zakauthedb-mkpwd
 *.tar.gz
 *.exe
 compile

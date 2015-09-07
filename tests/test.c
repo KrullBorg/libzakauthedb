@@ -18,26 +18,26 @@
 
 #include <gtk/gtk.h>
 
-#include <libzakauth.h>
+#include <libzakauthe.h>
 
 int
 main (int argc, char **argv)
 {
-	ZakAuth *aute;
+	ZakAuthe *aute;
 	GSList *params;
 
 	gtk_init (&argc, &argv);
 
-	aute = zak_auth_new ();
+	aute = zak_authe_new ();
 
 	/* the libaute module to use */
 	params = g_slist_append (params, argv[1]);
 	/* the libgda connection string */
 	params = g_slist_append (params, argv[2]);
 
-	zak_auth_set_config (aute, params);
+	zak_authe_set_config (aute, params);
 
-	g_message ("User %s\n", zak_auth_auth (aute));
+	g_message ("User %s\n", zak_authe_authe (aute));
 
 	return 0;
 }

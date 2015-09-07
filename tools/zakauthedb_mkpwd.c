@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2006-2015 Andrea Zagli <azagli@libero.it>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ main (int argc, char **argv)
 	gchar *pwd = NULL;
 	GOptionEntry entries[] =
 		{
-			{ "password", 'p', 0, G_OPTION_ARG_STRING, &pwd, "La stringa da cifrare", NULL },
+			{ "password", 'p', 0, G_OPTION_ARG_STRING, &pwd, "The string to encrypt", NULL },
 			{ NULL }
 		};
 
@@ -65,13 +65,13 @@ main (int argc, char **argv)
 	if (!g_option_context_parse (context, &argc, &argv, &error))
 		{
 			/* TO DO */
-			g_printf ("Errore argomenti riga comando.\n");
+			g_printf ("Error on command line arguments.\n");
 			return 0;
 		}
 
 	if (pwd == NULL || strcmp (g_strstrip (pwd), "") == 0)
 		{
-			g_printf ("Occorre specificare la stringa da cifrare.\n");
+			g_printf ("You need to provide the string to encrypt.\n");
 			return 0;
 		}
 

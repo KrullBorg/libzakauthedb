@@ -66,7 +66,7 @@ get_connection_parameters_from_confi (Confi *confi, gchar **cnc_string)
 {
 	gboolean ret = TRUE;
 
-	*cnc_string = confi_path_get_value (confi, "libzakauth/libzakauthdb/db/cnc_string");
+	*cnc_string = confi_path_get_value (confi, "libzakauthe/libzakauthedb/db/cnc_string");
 
 	if (*cnc_string == NULL
 	    || strcmp (g_strstrip (*cnc_string), "") == 0)
@@ -122,7 +122,7 @@ get_gdaex (GSList *parameters)
 	gdaex = gdaex_new_from_string (cnc_string);
 	if (gdaex == NULL)
 		{
-			g_warning ("Unable to establish a db connection.");
+			g_warning ("Unable to establish a connection to the database.");
 		}
 }
 
@@ -149,13 +149,13 @@ static GtkWindow
 }
 
 /**
- * zak_auth_db_encrypt_password:
+ * zak_authe_db_encrypt_password:
  * @password: una stringa da cifrare.
  *
  * Returns: the @password encrypted.
  */
 gchar
-*zak_auth_db_encrypt_password (const gchar *password)
+*zak_authe_db_encrypt_password (const gchar *password)
 {
 	gchar digest[17] = "";
 	gchar pwd_gcrypt[33] = "";
@@ -192,7 +192,7 @@ static gchar
 	                       " AND password = '%s'"
 	                       " AND status <> 'E'",
 	                       gdaex_strescape (utente, NULL),
-	                       gdaex_strescape (zak_auth_db_encrypt_password (password), NULL));
+	                       gdaex_strescape (zak_authe_db_encrypt_password (password), NULL));
 	dm = gdaex_query (gdaex, sql);
 	g_free (sql);
 	if (dm == NULL || gda_data_model_get_n_rows (dm) <= 0)
@@ -227,7 +227,7 @@ static gchar
 					sql = g_strdup_printf ("UPDATE users"
 					                       " SET password = '%s'"
 					                       " WHERE code = '%s'",
-					                       gdaex_strescape (zak_auth_db_encrypt_password (password_nuova), NULL),
+					                       gdaex_strescape (zak_authe_db_encrypt_password (password_nuova), NULL),
 					                       gdaex_strescape (utente, NULL));
 					if (gdaex_execute (gdaex, sql) == -1)
 						{
@@ -308,7 +308,7 @@ autedb_edit_user ()
 			                                 GTK_DIALOG_DESTROY_WITH_PARENT,
 			                                 GTK_MESSAGE_WARNING,
 			                                 GTK_BUTTONS_OK,
-			                                 "You must before select a user.");
+			                                 "You need to select a user.");
 			gtk_dialog_run (GTK_DIALOG (dialog));
 			gtk_widget_destroy (dialog);
 		}
@@ -353,7 +353,7 @@ autedb_on_btn_delete_clicked (GtkButton *button,
 			                                 GTK_DIALOG_DESTROY_WITH_PARENT,
 			                                 GTK_MESSAGE_QUESTION,
 			                                 GTK_BUTTONS_YES_NO,
-			                                 "Sicuro di voler eliminare l'utente selezionato?");
+			                                 "Are you sure to want to delete the selected user?");
 			risp = gtk_dialog_run (GTK_DIALOG (dialog));
 			if (risp == GTK_RESPONSE_YES)
 				{
@@ -374,7 +374,7 @@ autedb_on_btn_delete_clicked (GtkButton *button,
 			                                 GTK_DIALOG_DESTROY_WITH_PARENT,
 			                                 GTK_MESSAGE_WARNING,
 			                                 GTK_BUTTONS_OK,
-			                                 "Occorre prima selezionare un modello");
+			                                 "You need to select a user.");
 			gtk_dialog_run (GTK_DIALOG (dialog));
 			gtk_widget_destroy (dialog);
 		}
@@ -397,7 +397,7 @@ autedb_on_btn_find_clicked (GtkButton *button,
 
 /* PUBLIC */
 gchar
-*zak_auth_auth (GSList *parameters)
+*zak_authe_authe (GSList *parameters)
 {
 	GError *error;
 	gchar *ret = NULL;
@@ -496,7 +496,7 @@ gchar
  *
  */
 GtkWidget
-*zak_auth_plg_get_management_gui (GSList *parameters)
+*zak_authe_plg_get_management_gui (GSList *parameters)
 {
 	GError *error;
 
@@ -509,14 +509,14 @@ GtkWidget
 
 	gchar *GUIDIR;
 
-	GUIDIR = g_build_filename (g_win32_get_package_installation_directory_of_module (NULL), "share", "libzakauthdb", "gui", NULL);
+	GUIDIR = g_build_filename (g_win32_get_package_installation_directory_of_module (NULL), "share", "libzakauthedb", "gui", NULL);
 #endif
 
 	if (!gtk_builder_add_objects_from_file (gtkbuilder, g_build_filename (GUIDIR, "autedb.gui", NULL),
 	                                        g_strsplit ("lstore_users|vbx_users_list", "|", -1),
 	                                        &error))
 		{
-			g_error ("Impossibile trovare il file di definizione dell'interfaccia utente.");
+			g_error ("Unable to find the gui definition file.");
 			return NULL;
 		}
 

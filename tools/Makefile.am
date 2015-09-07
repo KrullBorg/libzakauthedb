@@ -6,6 +6,6 @@ AM_CPPFLAGS = $(WARN_CFLAGS) \
 LIBS = $(LIBAUTEDB_LIBS) \
        $(LIBGCRYPT_LIBS)
 
-noinst_PROGRAMS = zakauthdb-mkpwd
+noinst_PROGRAMS = zakauthedb-mkpwd
 
-zakauthdb_mkpwd_SOURCES = zakauthdb_mkpwd.c
+zakauthedb_mkpwd_SOURCES = zakauthedb_mkpwd.c
