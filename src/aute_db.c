@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2011 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2005-2015 Andrea Zagli <azagli@libero.it>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #ifdef HAVE_CONFIG_H
 	#include "config.h"
 #endif
-  
+
 #include <gtk/gtk.h>
 #include <gcrypt.h>
 #include <libgdaex/libgdaex.h>
@@ -58,6 +58,30 @@ enum
 };
 
 /* PRIVATE */
+#ifdef G_OS_WIN32
+static HMODULE backend_dll = NULL;
+
+BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved);
+
+BOOL WINAPI
+DllMain (HINSTANCE hinstDLL,
+         DWORD     fdwReason,
+         LPVOID    lpReserved)
+{
+	switch (fdwReason)
+		{
+			case DLL_PROCESS_ATTACH:
+				backend_dll = (HMODULE) hinstDLL;
+				break;
+			case DLL_THREAD_ATTACH:
+			case DLL_THREAD_DETACH:
+			case DLL_PROCESS_DETACH:
+				break;
+		}
+	return TRUE;
+}
+#endif
+
 #ifdef HAVE_LIBCONFI
 static gboolean
 get_connection_parameters_from_confi (Confi *confi, gchar **cnc_string)
@@ -322,14 +346,14 @@ autedb_on_btn_new_clicked (GtkButton *button,
 	gtk_window_set_transient_for (GTK_WINDOW (w), autedb_get_gtkwidget_parent_gtkwindow (w_users));
 	gtk_widget_show (w);
 }
-  
+
 static void
 autedb_on_btn_edit_clicked (GtkButton *button,
                            gpointer user_data)
 {
 	autedb_edit_user ();
 }
-  
+
 static void
 autedb_on_btn_delete_clicked (GtkButton *button,
                            gpointer user_data)
@@ -387,7 +411,7 @@ autedb_on_btn_find_clicked (GtkButton *button,
                            gpointer user_data)
 {
 }
-  
+
 /* PUBLIC */
 gchar
 *autentica (GSList *parameters)
@@ -414,7 +438,7 @@ gchar
 	gchar *moddir;
 	gchar *p;
 
-	moddir = g_win32_get_package_installation_directory_of_module (NULL);
+	moddir = g_win32_get_package_installation_directory_of_module (backend_dll);
 
 	p = g_strrstr (moddir, g_strdup_printf ("%c", G_DIR_SEPARATOR));
 	if (p != NULL
