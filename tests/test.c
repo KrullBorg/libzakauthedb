@@ -30,6 +30,8 @@ main (int argc, char **argv)
 
 	aute = zak_authe_new ();
 
+	params = NULL;
+
 	/* the libaute module to use */
 	params = g_slist_append (params, argv[1]);
 	/* the libgda connection string */

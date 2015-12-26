@@ -1,4 +1,4 @@
-guidir = $(datadir)/libaute-db/gui
+guidir = $(datadir)/libzakauthedb/gui
 
 gui_DATA = autedb.gui
 

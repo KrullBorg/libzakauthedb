@@ -397,7 +397,7 @@ autedb_on_btn_find_clicked (GtkButton *button,
 
 /* PUBLIC */
 gchar
-*zak_authe_authe (GSList *parameters)
+*zak_authe_plg_authe (GSList *parameters)
 {
 	GError *error;
 	gchar *ret = NULL;
@@ -441,6 +441,7 @@ gchar
 
 #else
 
+	guidir = g_strdup (GUIDIR);
 	formdir = g_strdup (FORMDIR);
 
 #endif

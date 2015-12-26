@@ -1,4 +1,4 @@
-formdir = $(datadir)/libaute-db/form
+formdir = $(datadir)/libzakauthedb/form
 
 form_DATA = user.form
 
