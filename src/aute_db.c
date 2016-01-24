@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2015 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2005-2016 Andrea Zagli <azagli@libero.it>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -175,23 +175,17 @@ gchar
 }
 
 static gchar
-*controllo ()
+*controllo (const gchar *username, const gchar *password, const gchar *new_password)
 {
 	gchar *sql;
-	gchar *utente = "";
-	gchar *password;
-	gchar *password_nuova;
 	GdaDataModel *dm;
-
-	utente = g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_utente))));
-	password = g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_password))));
 
 	sql = g_strdup_printf ("SELECT code"
 	                       " FROM users"
 	                       " WHERE code = '%s'"
 	                       " AND password = '%s'"
 	                       " AND status <> 'E'",
-	                       gdaex_strescape (utente, NULL),
+	                       gdaex_strescape (username, NULL),
 	                       gdaex_strescape (zak_authe_db_encrypt_password (password), NULL));
 	dm = gdaex_query (gdaex, sql);
 	g_free (sql);
@@ -204,22 +198,18 @@ static gchar
 			g_warning ("User name or password aren't valids.");
 			return NULL;
 		}
-
-	utente = g_strstrip (g_strdup (gdaex_data_model_get_field_value_stringify_at (dm, 0, "code")));
-
-	if (strcmp (utente, "") != 0
-	    && gtk_expander_get_expanded (GTK_EXPANDER (exp_cambio)))
+	if (dm != NULL)
 		{
-			password_nuova = g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_password_nuova))));
-			if (strlen (password_nuova) == 0 || strcmp (g_strstrip (password_nuova), "") == 0)
+			g_object_unref (dm);
+		}
+
+	if (new_password != NULL)
+		{
+			gchar *_new_password = g_strstrip (g_strdup (new_password));
+			if (strlen (_new_password) == 0 || g_strcmp0 (_new_password, "") == 0)
 				{
 					/* TO DO */
 					g_warning ("The new password cannot be empty.");
-				}
-			else if (strcmp (g_strstrip (password_nuova), g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_password_conferma))))) != 0)
-				{
-					/* TO DO */
-					g_warning ("The new and confirm password don't match.");
 				}
 			else
 				{
@@ -227,18 +217,20 @@ static gchar
 					sql = g_strdup_printf ("UPDATE users"
 					                       " SET password = '%s'"
 					                       " WHERE code = '%s'",
-					                       gdaex_strescape (zak_authe_db_encrypt_password (password_nuova), NULL),
-					                       gdaex_strescape (utente, NULL));
+					                       gdaex_strescape (zak_authe_db_encrypt_password (_new_password), NULL),
+					                       gdaex_strescape (username, NULL));
 					if (gdaex_execute (gdaex, sql) == -1)
 						{
 							/* TO DO */
+							g_free (sql);
 							g_warning ("Error changing password.");
 							return NULL;
 						}
+					g_free (sql);
 				}
 		}
 
-	return utente;
+	return g_strdup (username);
 }
 
 static void
@@ -402,6 +394,10 @@ gchar
 	GError *error;
 	gchar *ret = NULL;
 
+	gchar *utente;
+	gchar *password;
+	gchar *new_password;
+
 	error = NULL;
 
 	get_gdaex (parameters);
@@ -472,7 +468,21 @@ gchar
 		{
 			case GTK_RESPONSE_OK:
 				/* controllo dell'utente e della password */
-				ret = controllo ();
+				password = g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_password))));
+				utente = g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_utente))));
+				new_password = NULL;
+				if (gtk_expander_get_expanded (GTK_EXPANDER (exp_cambio)))
+					{
+						new_password = g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_password_nuova))));
+						if (strcmp (g_strstrip (new_password), g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_password_conferma))))) != 0)
+							{
+								/* TO DO */
+								g_warning ("The new and confirm password don't match.");
+								g_free (new_password);
+								new_password = NULL;
+							}
+					}
+				ret = controllo (utente, password, new_password);
 				break;
 
 			case GTK_RESPONSE_CANCEL:
@@ -487,6 +497,44 @@ gchar
 
 	gtk_widget_destroy (diag);
 	g_object_unref (gtkbuilder);
+
+	return ret;
+}
+
+/**
+ * zak_authe_plg_authe_nogui:
+ * @parameters:
+ * @username:
+ * @password:
+ * @new_password:
+ *
+ */
+gboolean
+zak_authe_plg_authe_nogui (GSList *parameters, const gchar *username, const gchar *password, const gchar *new_password)
+{
+	gboolean ret;
+
+	gchar *_username;
+
+	get_gdaex (parameters);
+	if (gdaex == NULL)
+		{
+			return FALSE;
+		}
+
+	/* inizializzo libgcrypt */
+	gcry_check_version (GCRYPT_VERSION);
+
+	_username = controllo (username, password, new_password);
+	if (_username != NULL
+		&& g_strcmp0 (_username, "") != 0)
+		{
+			ret = TRUE;
+		}
+	else
+		{
+			ret = FALSE;
+		}
 
 	return ret;
 }

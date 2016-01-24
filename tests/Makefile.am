@@ -8,4 +8,5 @@ LIBS = $(GTK_LIBS) \
 
 LDADD = ../src/libzakauthedb.la
 
-noinst_PROGRAMS = test
+noinst_PROGRAMS = test \
+                  test_nogui
