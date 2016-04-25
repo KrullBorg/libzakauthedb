@@ -60,6 +60,30 @@ enum
 };
 
 /* PRIVATE */
+#ifdef G_OS_WIN32
+static HMODULE backend_dll = NULL;
+
+BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved);
+
+BOOL WINAPI
+DllMain (HINSTANCE hinstDLL,
+         DWORD     fdwReason,
+         LPVOID    lpReserved)
+{
+	switch (fdwReason)
+		{
+			case DLL_PROCESS_ATTACH:
+				backend_dll = (HMODULE) hinstDLL;
+				break;
+			case DLL_THREAD_ATTACH:
+			case DLL_THREAD_DETACH:
+			case DLL_PROCESS_DETACH:
+				break;
+		}
+	return TRUE;
+}
+#endif
+
 #ifdef HAVE_LIBCONFI
 static gboolean
 get_connection_parameters_from_confi (Confi *confi, gchar **cnc_string)
@@ -416,7 +440,7 @@ gchar
 	gchar *moddir;
 	gchar *p;
 
-	moddir = g_win32_get_package_installation_directory_of_module (NULL);
+	moddir = g_win32_get_package_installation_directory_of_module (backend_dll);
 
 	p = g_strrstr (moddir, g_strdup_printf ("%c", G_DIR_SEPARATOR));
 	if (p != NULL
