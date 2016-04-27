@@ -21,17 +21,17 @@ AC_PROG_CC
 AC_PROG_LIBTOOL
 
 # Checks for libraries.
-PKG_CHECK_MODULES(LIBAUTEDB, [libzakauthe >= 0.5.0
-                              libgtkform >= 0.5.0])
+PKG_CHECK_MODULES(LIBZAKAUTHEDB, [libzakauthe >= 0.5.0
+								 libgtkform >= 0.5.0])
 
-AC_SUBST(LIBAUTEDB_CFLAGS)
-AC_SUBST(LIBAUTEDB_LIBS)
+AC_SUBST(LIBZAKAUTHEDB_CFLAGS)
+AC_SUBST(LIBZAKAUTHEDB_LIBS)
 
-PKG_CHECK_MODULES(LIBCONFI, [libconfi >= 0.0.2], [AC_DEFINE(HAVE_LIBCONFI, [1], [libconfi is present]), have_libconfi=yes], have_libconfi=no)
+PKG_CHECK_MODULES(LIBZAKCONFI, [libzakconfi >= 0.0.2], [AC_DEFINE(HAVE_LIBZAKCONFI, [1], [libzakconfi is present]), have_libzakconfi=yes], have_libzakconfi=no)
 
-AM_CONDITIONAL(HAVE_LIBCONFI, test x"$have_libconfi" = "xyes")
-AC_SUBST(LIBCONFI_CFLAGS)
-AC_SUBST(LIBCONFI_LIBS)
+AM_CONDITIONAL(HAVE_LIBZAKCONFI, test x"$have_libzakconfi" = "xyes")
+AC_SUBST(LIBZAKCONFI_CFLAGS)
+AC_SUBST(LIBZAKCONFI_LIBS)
 
 AM_PATH_LIBGCRYPT(1.2.1, :, [AC_MSG_ERROR([libgcrypt >= 1.2.1 not found.])])
 

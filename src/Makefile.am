@@ -1,17 +1,17 @@
 guidir = $(datadir)/libzakauthedb/gui
 formdir = $(datadir)/libzakauthedb/form
 
-AM_CPPFLAGS = $(LIBAUTEDB_CFLAGS) \
+AM_CPPFLAGS = $(LIBZAKAUTHEDB_CFLAGS) \
               $(LIBGCRYPT_CFLAGS) \
               $(GPG_ERROR_CFLAGS) \
-              $(LIBCONFI_CFLAGS) \
+              $(LIBZAKCONFI_CFLAGS) \
               -DGUIDIR=\""$(guidir)"\" \
               -DFORMDIR=\""$(formdir)"\"
 
-LIBS = $(LIBAUTEDB_LIBS) \
+LIBS = $(LIBZAKAUTHEDB_LIBS) \
        $(LIBGCRYPT_LIBS) \
        $(GPG_ERROR_LIBS) \
-       $(LIBCONFI_LIBS)
+       $(LIBZAKCONFI_LIBS)
 
 libzakauthe_pluginsdir = $(libdir)/libzakauthe/plugins
 libzakauthe_plugins_LTLIBRARIES = libzakauthedb.la
