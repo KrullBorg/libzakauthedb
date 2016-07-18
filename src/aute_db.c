@@ -24,7 +24,7 @@
 #include <gtk/gtk.h>
 #include <gcrypt.h>
 #include <libgdaex/libgdaex.h>
-#include <libgtkform/fielddatetime.h>
+#include <libzakutils/libzakutils.h>
 
 #ifdef HAVE_LIBCONFI
 	#include <libconfi.h>
@@ -283,7 +283,7 @@ autedb_load_users_list ()
 					                    COL_NAME, g_strdup_printf ("%s %s",
 					                              gdaex_data_model_get_field_value_stringify_at (dm, row, "surname"),
 					                              gdaex_data_model_get_field_value_stringify_at (dm, row, "name")),
-					                    COL_PASSWORD_EXPIRATION, gtk_form_field_datetime_get_str_from_tm (gdaex_data_model_get_field_value_tm_at (dm, row, "password_expiration"), "%d/%m/%Y %H.%M.%S"),
+					                    COL_PASSWORD_EXPIRATION, zak_utils_gdatetime_format (gdaex_data_model_get_field_value_gdatetime_at (dm, row, "password_expiration"), "%d/%m/%Y %H.%M.%S"),
 					                    -1);
 				}
 		}
