@@ -1,45 +1,57 @@
 <?xml version="1.0"?>
-<gtkform>
+<zakform>
 
-	<table>users</table>
+  <element type="zak_form_gtk_form_element_entry">
+	<name>code</name>
+	<type>string</type>
+	<is-key>TRUE</is-key>
+	<widget>entry1</widget>
+	<label>label6</label>
+	<validator type="zak_form_element_validator_notempty"></validator>
+  </element>
 
-	<widget type="entry" name="entry1" label="label6">
-		<field type="text" name="code">
-			<is-key>t</is-key>
-			<obligatory>t</obligatory>
-		</field>
-	</widget>
+  <element type="zak_form_gtk_form_element_label">
+	<name>password</name>
+	<type>string</type>
+	<widget>label14</widget>
+  </element>
 
-	<widget type="label" name="label14">
-		<field type="text" name="password">
-		</field>
-	</widget>
+  <element type="zak_form_gtk_form_element_entry">
+	<name>surname</name>
+	<type>string</type>
+	<widget>entry2</widget>
+	<label>label7</label>
+	<validator type="zak_form_element_validator_notempty"></validator>
+  </element>
 
-	<widget type="entry" name="entry2" label="label7">
-		<field type="text" name="surname">
-			<obligatory>t</obligatory>
-		</field>
-	</widget>
+  <element type="zak_form_gtk_form_element_entry">
+	<name>name</name>
+	<type>string</type>
+	<widget>entry3</widget>
+	<label>label8</label>
+  </element>
 
-	<widget type="entry" name="entry3" label="label8">
-		<field type="text" name="name" />
-	</widget>
+  <element type="zak_form_gtk_form_element_check">
+	<name>enabled</name>
+	<type>boolean</type>
+	<widget>checkbutton1</widget>
+	<label>label11</label>
+  </element>
 
-	<widget type="checkbox" name="checkbutton1" label="label9">
-		<field type="boolean" name="enabled">
-			<default>t</default>
-		</field>
-	</widget>
+  <element type="zak_form_gtk_form_element_entry">
+	<name>password_expiration</name>
+	<type>datetime</type>
+	<format>%d/%m/%Y %H.%M.%S</format>
+	<widget>entry4</widget>
+	<label>label11</label>
+	<validator type="zak_form_element_validator_date">%d/%m/%Y %H.%M.%S</validator>
+  </element>
 
-	<widget type="entry" name="entry4" label="label11">
-		<field type="datetime" name="password_expiration">
-			<datetime-type>datetime</datetime-type>
-			<display-format>%d/%m/%Y %H.%M.%S</display-format>
-		</field>
-	</widget>
+  <element type="zak_form_gtk_form_element_textview">
+	<name>notes</name>
+	<type>string</type>
+	<widget>textview1</widget>
+	<label>label12</label>
+  </element>
 
-	<widget type="textview" name="textview1" label="label12">
-		<field type="text" name="notes" />
-	</widget>
-
-</gtkform>
+</zakform>

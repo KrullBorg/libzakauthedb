@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2015 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2010-2016 Andrea Zagli <azagli@libero.it>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,7 +17,13 @@
  *
  */
 
-#include <libgtkform/form.h>
+#ifdef HAVE_CONFIG_H
+	#include "config.h"
+#endif
+
+#include <libzakform/libzakform.h>
+#include <libzakformgtk/libzakformgtk.h>
+#include <libzakformgdaex/libzakformgdaex.h>
 
 #include "user.h"
 #include "aute_db.h"
@@ -50,12 +56,6 @@ static void user_on_btn_salva_clicked (GtkButton *button,
 
 #define USER_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), TYPE_USER, UserPrivate))
 
-enum
-{
-	TXT_CODE,
-	LBL_PASSWORD
-};
-
 typedef struct _UserPrivate UserPrivate;
 struct _UserPrivate
 	{
@@ -64,11 +64,10 @@ struct _UserPrivate
 		gchar *guifile;
 		gchar *formdir;
 
-		GtkForm *form;
+		ZakFormGtkForm *form;
+		ZakFormGdaexProvider *provider;
 
 		GtkWidget *w;
-
-		GObject **objects;
 
 		gchar *code;
 	};
@@ -144,18 +143,14 @@ User
 			return NULL;
 		}
 
-	priv->form = gtk_form_new ();
-	g_object_set (priv->form, "gdaex", priv->gdaex, NULL);
-	gtk_form_load_from_file (priv->form, g_build_filename (priv->formdir, "user.form", NULL), priv->gtkbuilder);
+	priv->form = zak_form_gtk_form_new ();
+	zak_form_gtk_form_set_gtkbuilder (priv->form, priv->gtkbuilder);
+	zak_form_form_load_from_file (ZAK_FORM_FORM (priv->form), g_build_filename (priv->formdir, "user.form", NULL));
+	zak_form_form_set_as_original (ZAK_FORM_FORM (priv->form));
 
-	g_object_set (priv->form, "gdaex", priv->gdaex, NULL);
+	priv->provider = zak_form_gdaex_provider_new (gdaex, "users");
 
 	priv->w = GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "w_user"));
-
-	priv->objects = gtk_form_get_objects_by_name (priv->form,
-	                                              "entry1",
-	                                              "label14",
-	                                              NULL);
 
 	g_signal_connect (priv->w,
 	                  "delete-event", G_CALLBACK (user_on_w_user_delete_event), (gpointer *)a);
@@ -171,12 +166,12 @@ User
 		}
 	if (priv->code == NULL || g_strcmp0 (priv->code, "") == 0)
 		{
-			gtk_form_clear (priv->form);
+			zak_form_form_clear (ZAK_FORM_FORM (priv->form));
 		}
 	else
 		{
-			gtk_entry_set_text (GTK_ENTRY (priv->objects[TXT_CODE]), priv->code);
-			gtk_editable_set_editable (GTK_EDITABLE (priv->objects[TXT_CODE]), FALSE);
+			gtk_entry_set_text (GTK_ENTRY (gtk_builder_get_object (priv->gtkbuilder, "entry1")), priv->code);
+			gtk_editable_set_editable (GTK_EDITABLE (gtk_builder_get_object (priv->gtkbuilder, "entry1")), FALSE);
 
 			user_carica (a);
 		}
@@ -203,46 +198,41 @@ user_carica (User *user)
 {
 	UserPrivate *priv = USER_GET_PRIVATE (user);
 
-	if (gtk_form_fill_from_table (priv->form))
-		{
-		}
+	zak_form_form_load (ZAK_FORM_FORM (priv->form), ZAK_FORM_IPROVIDER (priv->provider));
 }
 
 static void
 user_salva (User *user)
 {
 	GError *error = NULL;
-	gchar *sql;
+	gboolean ret;
 	GtkWidget *dialog;
-
-	GDate *da;
-	GDate *a;
 
 	UserClass *klass = USER_GET_CLASS (user);
 
 	UserPrivate *priv = USER_GET_PRIVATE (user);
 
-	if (!gtk_form_check (priv->form, FALSE, NULL, TRUE, priv->w, TRUE))
+	if (!zak_form_gtk_form_is_valid (priv->form, priv->w))
 		{
 			return;
 		}
 
 	if (priv->code == NULL || g_strcmp0 (priv->code, "") == 0)
 		{
-			gtk_label_set_text (GTK_LABEL (priv->objects[LBL_PASSWORD]),
-			                    zak_authe_db_encrypt_password (gtk_entry_get_text (GTK_ENTRY (priv->objects[TXT_CODE]))));
-			sql = gtk_form_get_sql (priv->form, GTK_FORM_SQL_INSERT);
+			gtk_label_set_text (GTK_LABEL (gtk_builder_get_object (priv->gtkbuilder, "label14")),
+			                    zak_authe_db_encrypt_password (gtk_entry_get_text (GTK_ENTRY (gtk_builder_get_object (priv->gtkbuilder, "entry1")))));
+			ret = zak_form_form_insert (ZAK_FORM_FORM (priv->form), ZAK_FORM_IPROVIDER (priv->provider));
 		}
 	else
 		{
-			sql = gtk_form_get_sql (priv->form, GTK_FORM_SQL_UPDATE);
+			ret = zak_form_form_update (ZAK_FORM_FORM (priv->form), ZAK_FORM_IPROVIDER (priv->provider));
 		}
 
-	if (gdaex_execute (priv->gdaex, sql) == 1)
+	if (ret)
 		{
 			g_signal_emit (user, klass->aggiornato_signal_id, 0);
 
-			gtk_form_set_as_origin (priv->form);
+			zak_form_form_set_as_original (ZAK_FORM_FORM (priv->form));
 
 			dialog = gtk_message_dialog_new (GTK_WINDOW (priv->w),
 											 GTK_DIALOG_DESTROY_WITH_PARENT,
@@ -304,7 +294,7 @@ user_conferma_chiusura (User *user)
 	UserPrivate *priv = USER_GET_PRIVATE (user);
 
 	ret = TRUE;
-	if (gtk_form_is_changed (priv->form))
+	if (zak_form_form_is_changed (ZAK_FORM_FORM (priv->form)))
 		{
 			dialog = gtk_message_dialog_new (GTK_WINDOW (priv->w),
 					                         GTK_DIALOG_DESTROY_WITH_PARENT,

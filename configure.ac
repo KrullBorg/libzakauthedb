@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([libzakauthedb], [0.5.0], [azagli@libero.it])
+AC_INIT([libzakauthedb], [0.5.99], [azagli@libero.it])
 AC_CONFIG_SRCDIR([src/aute_db.c])
 AC_CONFIG_HEADER([config.h])
 
@@ -20,9 +20,20 @@ AC_LIBTOOL_WIN32_DLL
 AC_PROG_CC
 AC_PROG_LIBTOOL
 
+dnl ******************************
+dnl Translations
+dnl ******************************
+GETTEXT_PACKAGE=zakformtests
+AC_SUBST(GETTEXT_PACKAGE)
+AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE",
+                   [The prefix for our gettext translation domains.])
+AM_GLIB_GNU_GETTEXT
+
 # Checks for libraries.
 PKG_CHECK_MODULES(LIBAUTEDB, [libzakauthe >= 0.5.0
-                              libgtkform >= 0.5.0])
+                              libzakform
+                              libzakformgtk
+                              libzakformgdaex])
 
 AC_SUBST(LIBAUTEDB_CFLAGS)
 AC_SUBST(LIBAUTEDB_LIBS)
