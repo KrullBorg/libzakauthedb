@@ -26,8 +26,8 @@
 #include <libgdaex/libgdaex.h>
 #include <libzakutils/libzakutils.h>
 
-#ifdef HAVE_LIBCONFI
-	#include <libconfi.h>
+#ifdef HAVE_LIBZAKCONFI
+	#include <libzakconfi/libzakconfi.h>
 #endif
 
 #include "user.h"
@@ -84,13 +84,13 @@ DllMain (HINSTANCE hinstDLL,
 }
 #endif
 
-#ifdef HAVE_LIBCONFI
+#ifdef HAVE_LIBZAKCONFI
 static gboolean
-get_connection_parameters_from_confi (Confi *confi, gchar **cnc_string)
+get_connection_parameters_from_confi (ZakConfi *confi, gchar **cnc_string)
 {
 	gboolean ret = TRUE;
 
-	*cnc_string = confi_path_get_value (confi, "libzakauthe/libzakauthedb/db/cnc_string");
+	*cnc_string = zak_confi_path_get_value (confi, "libzakauthe/libzakauthedb/db/cnc_string");
 
 	if (*cnc_string == NULL
 	    || strcmp (g_strstrip (*cnc_string), "") == 0)
@@ -109,14 +109,16 @@ get_gdaex (GSList *parameters)
 
 	cnc_string = NULL;
 
-#ifdef HAVE_LIBCONFI
-	/* the first and only parameters must be a Confi object */
-	/* leggo i parametri di connessione dalla configurazione */
-	if (IS_CONFI (parameters->data))
+#ifdef HAVE_LIBZAKCONFI
+	/* the first and only parameters must be a ZakConfi object */
+	if (g_strcmp0 ((gchar *)parameters->data, "{libzakconfi}") == 0)
 		{
-			if (!get_connection_parameters_from_confi (CONFI (parameters->data), &cnc_string))
+			if (ZAK_IS_CONFI ((ZakConfi *)g_slist_nth_data (parameters, 1)))
 				{
-					cnc_string = NULL;
+					if (!get_connection_parameters_from_confi (ZAK_CONFI ((ZakConfi *)g_slist_nth_data (parameters, 1)), &cnc_string))
+						{
+							cnc_string = NULL;
+						}
 				}
 		}
 #endif

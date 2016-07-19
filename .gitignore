@@ -26,6 +26,7 @@ missing
 config.h
 stamp-h1
 tests/test
+tests/test_confi
 tests/test_nogui
 tools/zakauthedb-mkpwd
 *.tar.gz
