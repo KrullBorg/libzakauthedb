@@ -1,9 +1,9 @@
 AM_CPPFLAGS = $(WARN_CFLAGS) \
               $(DISABLE_DEPRECATED_CFLAGS) \
-              $(LIBAUTEDB_CFLAGS) \
+              $(LIBZAKAUTHEDB_CFLAGS) \
               $(LIBGCRYPT_CFLAGS)
 
-LIBS = $(LIBAUTEDB_LIBS) \
+LIBS = $(LIBZAKAUTHEDB_LIBS) \
        $(LIBGCRYPT_LIBS)
 
 noinst_PROGRAMS = zakauthedb-mkpwd
