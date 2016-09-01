@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2015 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2010-2016 Andrea Zagli <azagli@libero.it>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 
 #include <gtk/gtk.h>
 
-#include <libzakauthe.h>
+#include <libzakauthe/libzakauthe.h>
 
 int
 main (int argc, char **argv)
@@ -32,7 +32,7 @@ main (int argc, char **argv)
 
 	params = NULL;
 
-	/* the libaute module to use */
+	/* the libzakauthe module to use */
 	params = g_slist_append (params, argv[1]);
 	/* the libgda connection string */
 	params = g_slist_append (params, argv[2]);

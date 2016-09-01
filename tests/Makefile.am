@@ -8,8 +8,6 @@ LIBS = $(GTK_LIBS) \
        $(LIBZAKAUTHEDB_LIBS) \
        $(LIBZAKCONFI_LIBS)
 
-LDADD = ../src/libzakauthedb.la
-
 noinst_PROGRAMS = test \
                   test_confi \
                   test_nogui

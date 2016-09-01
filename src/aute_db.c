@@ -22,14 +22,20 @@
 
 #include <glib/gprintf.h>
 #include <gtk/gtk.h>
+
+#include <libpeas/peas.h>
+
 #include <gcrypt.h>
 #include <libgdaex/libgdaex.h>
 #include <libzakutils/libzakutils.h>
+
+#include <libzakauthe/libzakauthe.h>
 
 #ifdef HAVE_LIBZAKCONFI
 	#include <libzakconfi/libzakconfi.h>
 #endif
 
+#include "aute_db.h"
 #include "user.h"
 
 static GtkBuilder *gtkbuilder;
@@ -60,6 +66,30 @@ enum
 };
 
 /* PRIVATE */
+static void zak_authe_pluggable_iface_init (ZakAuthePluggableInterface *iface);
+
+static void zak_authe_db_finalize (GObject *object);
+
+static gchar *zak_authe_db_authe_get_password (ZakAuthePluggable *pluggable, GSList *parameters, gchar **password);
+static gchar *zak_authe_db_authe (ZakAuthePluggable *pluggable, GSList *parameters);
+static gboolean zak_authe_db_authe_nogui (ZakAuthePluggable *pluggable, GSList *parameters, const gchar *username, const gchar *password, const gchar *new_password);
+static GtkWidget *zak_authe_db_get_management_gui (ZakAuthePluggable *pluggable, GSList *parameters);
+
+#define ZAK_AUTHE_DB_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), ZAK_AUTHE_TYPE_DB, ZakAutheDBPrivate))
+
+typedef struct _ZakAutheDBPrivate ZakAutheDBPrivate;
+struct _ZakAutheDBPrivate
+	{
+		gpointer empty;
+	};
+
+G_DEFINE_DYNAMIC_TYPE_EXTENDED (ZakAutheDB,
+                                zak_authe_db,
+                                PEAS_TYPE_EXTENSION_BASE,
+                                0,
+                                G_IMPLEMENT_INTERFACE_DYNAMIC (ZAK_AUTHE_TYPE_PLUGGABLE,
+                                                               zak_authe_pluggable_iface_init))
+
 #ifdef G_OS_WIN32
 static HMODULE backend_dll = NULL;
 
@@ -83,6 +113,39 @@ DllMain (HINSTANCE hinstDLL,
 	return TRUE;
 }
 #endif
+
+static void
+zak_authe_db_class_init (ZakAutheDBClass *klass)
+{
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+	g_type_class_add_private (object_class, sizeof (ZakAutheDBPrivate));
+
+	object_class->finalize = zak_authe_db_finalize;
+}
+
+static void
+zak_authe_pluggable_iface_init (ZakAuthePluggableInterface *iface)
+{
+	iface->authe = zak_authe_db_authe;
+	iface->authe_get_password = zak_authe_db_authe_get_password;
+	iface->authe_nogui = zak_authe_db_authe_nogui;
+	iface->get_management_gui = zak_authe_db_get_management_gui;
+}
+
+static void
+zak_authe_db_init (ZakAutheDB *plugin)
+{
+	ZakAutheDBPrivate *priv = ZAK_AUTHE_DB_GET_PRIVATE (plugin);
+}
+
+static void
+zak_authe_db_finalize (GObject *object)
+{
+	ZakAutheDB *plugin = ZAK_AUTHE_DB (object);
+
+	G_OBJECT_CLASS (zak_authe_db_parent_class)->finalize (object);
+}
 
 #ifdef HAVE_LIBZAKCONFI
 static gboolean
@@ -413,15 +476,14 @@ autedb_on_btn_find_clicked (GtkButton *button,
 {
 }
 
-/* PUBLIC */
-gchar
-*zak_authe_plg_authe (GSList *parameters)
+static gchar
+*zak_authe_db_authe_get_password (ZakAuthePluggable *pluggable, GSList *parameters, gchar **password)
 {
 	GError *error;
 	gchar *ret = NULL;
 
 	gchar *utente;
-	gchar *password;
+	gchar *_password;
 	gchar *new_password;
 
 	error = NULL;
@@ -494,7 +556,7 @@ gchar
 		{
 			case GTK_RESPONSE_OK:
 				/* controllo dell'utente e della password */
-				password = g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_password))));
+				_password = g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_password))));
 				utente = g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_utente))));
 				new_password = NULL;
 				if (gtk_expander_get_expanded (GTK_EXPANDER (exp_cambio)))
@@ -508,7 +570,7 @@ gchar
 								new_password = NULL;
 							}
 					}
-				ret = controllo (utente, password, new_password);
+				ret = controllo (utente, _password, new_password);
 				break;
 
 			case GTK_RESPONSE_CANCEL:
@@ -521,22 +583,39 @@ gchar
 				break;
 		}
 
+	if (ret != NULL && g_strcmp0 (ret, "") != 0 && password != NULL && *password == NULL)
+		{
+			if (g_strcmp0 (gtk_entry_get_text (GTK_ENTRY (txt_password_conferma)), "") != 0)
+				{
+					*password = g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_password_conferma)));
+				}
+			else
+				{
+					*password = g_strdup (gtk_entry_get_text (GTK_ENTRY (txt_password)));
+				}
+		}
+
 	gtk_widget_destroy (diag);
 	g_object_unref (gtkbuilder);
 
 	return ret;
 }
 
+static gchar
+*zak_authe_db_authe (ZakAuthePluggable *pluggable, GSList *parameters)
+{
+	return zak_authe_db_authe_get_password (pluggable, parameters, NULL);
+}
 /**
- * zak_authe_plg_authe_nogui:
+ * zak_authe_db_authe_nogui:
  * @parameters:
  * @username:
  * @password:
  * @new_password:
  *
  */
-gboolean
-zak_authe_plg_authe_nogui (GSList *parameters, const gchar *username, const gchar *password, const gchar *new_password)
+static gboolean
+zak_authe_db_authe_nogui (ZakAuthePluggable *pluggable, GSList *parameters, const gchar *username, const gchar *password, const gchar *new_password)
 {
 	gboolean ret;
 
@@ -570,8 +649,8 @@ zak_authe_plg_authe_nogui (GSList *parameters, const gchar *username, const gcha
  * @parameters:
  *
  */
-GtkWidget
-*zak_authe_plg_get_management_gui (GSList *parameters)
+static GtkWidget
+*zak_authe_db_get_management_gui (ZakAuthePluggable *pluggable, GSList *parameters)
 {
 	GError *error;
 
@@ -621,4 +700,19 @@ GtkWidget
 	autedb_load_users_list ();
 
 	return w_users;
+}
+
+static void
+zak_authe_db_class_finalize (ZakAutheDBClass *klass)
+{
+}
+
+G_MODULE_EXPORT void
+peas_register_types (PeasObjectModule *module)
+{
+	zak_authe_db_register_type (G_TYPE_MODULE (module));
+
+	peas_object_module_register_extension_type (module,
+	                                            ZAK_AUTHE_TYPE_PLUGGABLE,
+	                                            ZAK_AUTHE_TYPE_DB);
 }

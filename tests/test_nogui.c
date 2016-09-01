@@ -18,7 +18,7 @@
 
 #include <gtk/gtk.h>
 
-#include <libzakauthe.h>
+#include <libzakauthe/libzakauthe.h>
 
 int
 main (int argc, char **argv)
