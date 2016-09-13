@@ -30,7 +30,7 @@ AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE",
 AM_GLIB_GNU_GETTEXT
 
 # Checks for libraries.
-PKG_CHECK_MODULES(LIBZAKAUTHEDB, [libzakauthe >= 0.5.0
+PKG_CHECK_MODULES(LIBZAKAUTHEDB, [libzakauthe >= 0.5.99
                                   libzakform
                                   libzakformgtk
                                   libzakformgdaex])

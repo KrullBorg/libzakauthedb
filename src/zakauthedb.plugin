@@ -1,0 +1,8 @@
+[Plugin]
+Module=zakauthedb
+Name=ZakAutheDB
+Description=Read users from database (via libgdaex).
+Authors=Andrea Zagli <azagli@libero.it>
+Copyright=Copyright © 2016 Andrea Zagli
+Website=http://saetta.ns0.it/
+Help=http://saetta.ns0.it/
